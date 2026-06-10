@@ -14,10 +14,14 @@ export const CODEX_MODEL = 'gpt-5.5';
 export const CODEX_REASONING_EFFORTS = Object.freeze(['low', 'medium', 'high', 'xhigh']);
 export const DEFAULT_CODEX_REASONING_EFFORT = 'high';
 
-export const CLAUDE_MODELS = Object.freeze(['claude-opus-4-8', 'claude-sonnet-4-6', 'claude-haiku-4-5-20251001']);
+export const CLAUDE_MODELS = Object.freeze(['claude-fable-5', 'claude-opus-4-8', 'claude-sonnet-4-6', 'claude-haiku-4-5-20251001']);
 export const DEFAULT_CLAUDE_MODEL = 'claude-opus-4-8';
+// 오케스트레이터 역할(분석팀·작성팀)은 최상위 모델인 Fable 5가 기본값.
+export const ORCHESTRATOR_CLAUDE_MODEL = 'claude-fable-5';
+const ORCHESTRATOR_ROLES = new Set(['orchestrator', 'writeOrchestrator']);
 // Claude Code `--effort` 등급은 모델마다 다르다. Haiku는 effort 미지원(빈 배열).
 export const CLAUDE_EFFORTS_BY_MODEL = Object.freeze({
+  'claude-fable-5': ['low', 'medium', 'high', 'xhigh', 'max'],
   'claude-opus-4-8': ['low', 'medium', 'high', 'xhigh', 'max'],
   'claude-sonnet-4-6': ['low', 'medium', 'high', 'max'],
   'claude-haiku-4-5-20251001': [],
@@ -49,9 +53,14 @@ function codexConfig(reasoningEffort = DEFAULT_CODEX_REASONING_EFFORT, model = C
 }
 
 function makeDefaults(backend = 'claude') {
-  // 모든 역할 기본값 동일(claude면 Opus).
+  // claude면 기본 Opus, 단 오케스트레이터는 Fable 5. codex면 역할 무관 동일.
   return Object.fromEntries(
-    ROLES.map(role => [role, backend === 'codex' ? codexConfig() : claudeConfig()])
+    ROLES.map(role => [
+      role,
+      backend === 'codex'
+        ? codexConfig()
+        : claudeConfig(ORCHESTRATOR_ROLES.has(role) ? ORCHESTRATOR_CLAUDE_MODEL : DEFAULT_CLAUDE_MODEL),
+    ])
   );
 }
 
