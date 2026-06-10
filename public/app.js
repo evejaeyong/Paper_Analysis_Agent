@@ -856,7 +856,8 @@ window.addEventListener('resize', () => {
 });
 
 const CLAUDE_MODELS = [
-  { value: 'claude-opus-4-8', label: 'Opus 4.8 (기본값, 최고 성능)' },
+  { value: 'claude-fable-5', label: 'Fable 5 (최고 성능, 오케스트레이터 기본값)' },
+  { value: 'claude-opus-4-8', label: 'Opus 4.8 (기본값, 고성능)' },
   { value: 'claude-sonnet-4-6', label: 'Sonnet 4.6 (균형)' },
   { value: 'claude-haiku-4-5-20251001', label: 'Haiku 4.5 (빠름/저렴)' },
 ];
@@ -867,6 +868,7 @@ const CODEX_MODELS = [
 // 추론 강도(reasoning effort).
 // Claude는 Claude Code `--effort`(모델별 지원 등급 다름), Codex는 model_reasoning_effort로 연동.
 const CLAUDE_EFFORTS_BY_MODEL = {
+  'claude-fable-5': ['low', 'medium', 'high', 'xhigh', 'max'],
   'claude-opus-4-8': ['low', 'medium', 'high', 'xhigh', 'max'],
   'claude-sonnet-4-6': ['low', 'medium', 'high', 'max'],
   'claude-haiku-4-5-20251001': [], // Haiku는 effort 미지원
