@@ -3419,3 +3419,9 @@ updateSendState();
 fetchAuthStatus();
 refreshLibrary();
 refreshLatexProjects();
+
+// 상단바 버전 표시 — package.json 단일 출처(/api/version), 하드코딩하지 않는다.
+fetch('/api/version')
+  .then(r => r.json())
+  .then(j => { const el = document.getElementById('appVersion'); if (el && j.version) el.textContent = `v${j.version}`; })
+  .catch(() => {});

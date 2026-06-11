@@ -43,6 +43,11 @@ function gcSessions() {
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = 8788;
+
+// 앱 버전 — package.json 단일 출처. 상단바 표시에 사용(하드코딩 금지).
+let APP_VERSION = '';
+try { APP_VERSION = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json'), 'utf8')).version || ''; }
+catch { /* 표시용이라 실패해도 무시 */ }
 const HOST = '127.0.0.1';
 
 const STATIC = {
@@ -1529,6 +1534,8 @@ function createAppServer() {
       handleLibraryReset(req, res);
     } else if (req.method === 'POST' && req.url === '/api/library/folders') {
       handleLibraryCreateFolder(req, res);
+    } else if (req.method === 'GET' && req.url === '/api/version') {
+      jsonResponse(res, 200, { version: APP_VERSION });
     } else if (req.method === 'GET' && req.url === '/api/latex-status') {
       handleLatexStatus(req, res);
     } else if (req.url && (req.url === '/api/library/projects' || req.url.startsWith('/api/library/projects/') || req.url.startsWith('/api/library/projects?'))) {
