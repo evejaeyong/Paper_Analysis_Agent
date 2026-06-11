@@ -42,15 +42,21 @@ function safeImagePaths(imagePaths = []) {
   });
 }
 
+// 워크스페이스 모드에서 허용하는 --permission-mode 값 (임의 문자열 차단)
+const PERMISSION_MODES = new Set(['acceptEdits']);
+
 /**
  * Claude CLI 호출. JSON 응답에서 result 필드의 텍스트를 반환.
  * @param {string} prompt
- * @param {{ systemPrompt?: string, timeoutMs?: number, sessionId?: string, resume?: string, model?: string, imagePaths?: string[], onMeta?: (meta: {usage?: object, durationMs: number, sessionIdFromResponse?: string}) => void }} opts
+ * @param {{ systemPrompt?: string, timeoutMs?: number, sessionId?: string, resume?: string, model?: string, imagePaths?: string[], cwd?: string, permissionMode?: 'acceptEdits', allowedTools?: string[], onMeta?: (meta: {usage?: object, durationMs: number, sessionIdFromResponse?: string}) => void }} opts
  * @returns {Promise<string>}
  */
 export async function callClaude(prompt, opts = {}) {
   const timeoutMs = opts.timeoutMs ?? 600_000;
-  const tempDir = await mkdtemp(path.join(os.tmpdir(), 'kpac-claude-'));
+  // 워크스페이스 모드: opts.cwd(프로젝트 src 등)를 작업 폴더로 사용해 Edit/Write가
+  // 그 트리를 직접 수정하게 한다. 그 외에는 기존대로 호출별 임시 폴더로 격리.
+  const tempDir = opts.cwd ? null : await mkdtemp(path.join(os.tmpdir(), 'kpac-claude-'));
+  const workDir = opts.cwd || tempDir;
 
   try {
     const images = safeImagePaths(opts.imagePaths);
@@ -76,6 +82,12 @@ ${images.map((imagePath, i) => `- image ${i + 1}: ${imagePath}`).join('\n')}`;
     if (CLAUDE_EFFORTS.has(opts.reasoningEffort)) {
       args.push('--effort', opts.reasoningEffort);
     }
+    if (opts.permissionMode) {
+      if (!PERMISSION_MODES.has(opts.permissionMode)) {
+        throw new Error(`허용되지 않은 permissionMode: ${opts.permissionMode}`);
+      }
+      args.push('--permission-mode', opts.permissionMode);
+    }
     if (images.length) {
       for (const dir of [...new Set(images.map(imagePath => path.dirname(imagePath)))]) {
         args.push('--add-dir', dir);
@@ -93,7 +105,7 @@ ${images.map((imagePath, i) => `- image ${i + 1}: ${imagePath}`).join('\n')}`;
         // args separate while allowing cmd.exe wrapper execution there.
         shell: process.platform === 'win32',
         stdio: ['pipe', 'pipe', 'pipe'],
-        cwd: tempDir,
+        cwd: workDir,
       });
 
       proc.stdout.setEncoding('utf8');
@@ -138,7 +150,7 @@ ${images.map((imagePath, i) => `- image ${i + 1}: ${imagePath}`).join('\n')}`;
       });
     });
   } finally {
-    await rm(tempDir, { recursive: true, force: true }).catch(() => {});
+    if (tempDir) await rm(tempDir, { recursive: true, force: true }).catch(() => {});
   }
 }
 

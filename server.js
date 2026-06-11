@@ -23,7 +23,7 @@ import { buildCitationRefMap, citationRefsForText, stripInvalidCitationMarkers }
 import * as latexProject from './core/latexProject.js';
 import { detectEngine, compileProject } from './core/latexCompiler.js';
 import { reverseLookup as synctexReverse } from './core/synctex.js';
-import { runPaperWriting } from './agents/paperWriting.js';
+import { runPaperWriting, runWorkspaceEdit } from './agents/paperWriting.js';
 import { findEvidence } from './agents/evidence.js';
 
 const MAX_UPLOAD_BYTES = 50 * 1024 * 1024;
@@ -43,6 +43,11 @@ function gcSessions() {
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = 8788;
+
+// 앱 버전 — package.json 단일 출처. 상단바 표시에 사용(하드코딩 금지).
+let APP_VERSION = '';
+try { APP_VERSION = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json'), 'utf8')).version || ''; }
+catch { /* 표시용이라 실패해도 무시 */ }
 const HOST = '127.0.0.1';
 
 const STATIC = {
@@ -855,6 +860,7 @@ async function handlePromptsPut(req, res) {
   const allowedPromptKeys = [
     'analyst', 'verifier', 'writer', 'orchestrator', 'coreInsight', 'evidence',
     'writeOrchestrator', 'writePlan', 'writeBody', 'writeFigure', 'writeReview', 'writeCitation', 'writeCompile', 'research', 'writeChat',
+    'writeWorkspace',
   ];
   for (const k of allowedPromptKeys) {
     if (k in payload) {
@@ -1220,15 +1226,29 @@ async function handleProjectChatEdit(req, res, id) {
   // 단계별 진행을 SSE 로 스트리밍
   startSse(res);
   try {
-    const result = await runPaperWriting({
+    const args = {
       projectId: id, file, mainFile: project.main_file, instruction, history,
       onStep: (ev) => sseWrite(res, ev),
-    });
+    };
+    let result;
+    if (llm.backend === 'claude') {
+      // 워크스페이스 편집(에이전트가 src를 직접 수정). 실패 시 변경은 스냅샷으로
+      // 롤백된 상태이므로 기존 파이프라인으로 안전하게 폴백한다.
+      try {
+        result = await runWorkspaceEdit(args);
+      } catch (err) {
+        sseWrite(res, { stage: 'step', label: `⚠️ 워크스페이스 편집 실패(${err.message}) → 기존 방식으로 재시도` });
+        result = await runPaperWriting(args);
+      }
+    } else {
+      result = await runPaperWriting(args);
+    }
     await library.touchProject(id).catch(() => {});
     sseWrite(res, {
       stage: 'done', ok: true, file: result.file, content: result.content, note: result.note,
       module: result.module, compiled: result.compiled, fixes: result.fixes, log: result.log,
       readOnly: !!result.readOnly, answer: result.answer || '',
+      changedFiles: result.changedFiles || [],
     });
   } catch (err) {
     sseWrite(res, { stage: 'error', error: err.message });
@@ -1514,6 +1534,8 @@ function createAppServer() {
       handleLibraryReset(req, res);
     } else if (req.method === 'POST' && req.url === '/api/library/folders') {
       handleLibraryCreateFolder(req, res);
+    } else if (req.method === 'GET' && req.url === '/api/version') {
+      jsonResponse(res, 200, { version: APP_VERSION });
     } else if (req.method === 'GET' && req.url === '/api/latex-status') {
       handleLatexStatus(req, res);
     } else if (req.url && (req.url === '/api/library/projects' || req.url.startsWith('/api/library/projects/') || req.url.startsWith('/api/library/projects?'))) {

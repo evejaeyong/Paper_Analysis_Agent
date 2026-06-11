@@ -522,6 +522,7 @@ const PROMPT_FIELDS = {
   writeOrchestrator: $('promptWriteOrchestrator'), writePlan: $('promptWritePlan'),
   writeBody: $('promptWriteBody'), writeFigure: $('promptWriteFigure'), writeReview: $('promptWriteReview'),
   writeCitation: $('promptWriteCitation'), writeCompile: $('promptWriteCompile'), research: $('promptResearch'), writeChat: $('promptWriteChat'),
+  writeWorkspace: $('promptWriteWorkspace'),
 };
 const LLM_ROLES = [
   'orchestrator', 'analyst', 'verifier', 'writer', 'coreInsight', 'chat', 'evidence',
@@ -2225,16 +2226,27 @@ async function sendLatexChat() {
 
     // 근거 탐색·웹 리서치(읽기 전용): 파일·PDF 변경 없이 답변만 표시
     if (final.readOnly) {
-      const icon = final.module === 'research' ? '🌐' : final.module === 'chat' ? '💬' : '🔎';
+      const icon = final.module === 'research' ? '🌐' : final.module === 'chat' ? '💬' : final.module === 'workspace' ? '🛠️' : '🔎';
       pending.textContent = `${icon} ${final.answer || final.note || '결과 없음'}`;
       recordLatexChat('ai', pending.textContent);
       latexChatLog.scrollTop = latexChatLog.scrollHeight;
       return;
     }
 
-    const moduleLabel = { writing: '✍️ 본문', figure: '📊 그림/표', citation: '📚 인용' }[final.module] || '';
+    const moduleLabel = { writing: '✍️ 본문', figure: '📊 그림/표', citation: '📚 인용', workspace: '🛠️ 워크스페이스' }[final.module] || '';
     pending.textContent = `🤖 ${moduleLabel ? '[' + moduleLabel + '] ' : ''}${final.note || '수정 완료'}`;
     recordLatexChat('ai', pending.textContent);
+    // 워크스페이스 편집은 여러 파일을 바꿀 수 있음 → 파일 트리 갱신
+    if (Array.isArray(final.changedFiles) && final.changedFiles.length) {
+      try {
+        const r = await fetch(`/api/library/projects/${state.currentProjectId}`);
+        if (r.ok) {
+          const jj = await r.json();
+          state.latexFiles = jj.files || state.latexFiles;
+          renderLatexFileTree();
+        }
+      } catch { /* 트리 갱신 실패는 치명적이지 않음 */ }
+    }
     if (latexEditor && typeof final.content === 'string' && final.file === state.currentLatexFile) {
       if (state.latexPreview) { showLatexEditorPane(); renderLatexFileTree(); }
       const beforeContent = latexEditor.getValue();
@@ -3407,3 +3419,9 @@ updateSendState();
 fetchAuthStatus();
 refreshLibrary();
 refreshLatexProjects();
+
+// 상단바 버전 표시 — package.json 단일 출처(/api/version), 하드코딩하지 않는다.
+fetch('/api/version')
+  .then(r => r.json())
+  .then(j => { const el = document.getElementById('appVersion'); if (el && j.version) el.textContent = `v${j.version}`; })
+  .catch(() => {});

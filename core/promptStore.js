@@ -14,6 +14,8 @@ const KEYS = [
   'evidence',
   // 논문 작성팀 (본문/그림은 계획→작성→검토 멀티에이전트) + 리서치(웹)
   'writeOrchestrator', 'writePlan', 'writeBody', 'writeFigure', 'writeReview', 'writeCitation', 'writeCompile', 'research', 'writeChat',
+  // 워크스페이스 편집(claude 백엔드): 프로젝트 src를 cwd로 두고 에이전트가 직접 수정
+  'writeWorkspace',
 ];
 
 /** 디스크에서 기본 프롬프트 읽기 */
