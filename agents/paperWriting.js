@@ -2,9 +2,12 @@
 // 논문 작성팀: 오케스트레이터가 지시를 분류 → writing/figure/citation 모듈 실행
 // → 컴파일 게이트(에러 시 writeCompile 수정 루프). STORM식 계획-우선 + self-reflection.
 import { callLLM } from '../core/llm.js';
+import { callClaude } from '../core/claudeClient.js';
 import * as llmConfig from '../core/llmConfig.js';
 import { getCurrent as getPrompts, fillTemplate } from '../core/promptStore.js';
 import * as latexProject from '../core/latexProject.js';
+import { projectSrcDir } from '../core/fileManager.js';
+import { takeSnapshot, diffSnapshot, restoreSnapshot } from '../core/projectSnapshot.js';
 import { compileProject } from '../core/latexCompiler.js';
 import { findEvidence } from './evidence.js';
 
@@ -180,6 +183,125 @@ async function runEditStep({ projectId, file, module, content, instruction, hist
     return runModule('writeCitation', 'writeCitation', { fileName: file, content, instruction, bibKeys });
   }
   return multiAgentEdit({ module, fileName: file, content, instruction, onStep, history });
+}
+
+// ---------------- 워크스페이스 편집 (claude 백엔드 전용) ----------------
+// 프로젝트 src 디렉터리를 cwd로 두고 Claude Code가 Read/Grep/Glob/Edit/Write로
+// 직접 탐색·수정한다. 기존 "전문을 프롬프트에 넣고 전문을 돌려받는" 파이프라인과 달리
+// 큰 파일·멀티파일 수정이 가능하고 토큰도 적게 쓴다. 변경은 스냅샷 diff로 추적하고,
+// 텍스트 소스 외 파일이 변경되면 전부 롤백한다.
+
+const WORKSPACE_TOOLS = ['Read', 'Grep', 'Glob', 'Edit', 'Write', 'WebFetch', 'WebSearch'];
+
+function diffToChangedFiles(diff) {
+  return [
+    ...diff.modified.map(p => ({ path: p, status: 'modified' })),
+    ...diff.added.map(p => ({ path: p, status: 'added' })),
+    ...diff.deleted.map(p => ({ path: p, status: 'deleted' })),
+  ];
+}
+
+// 워크스페이스에서 claude 1회 실행. 텍스트 외 파일 변경 시 롤백 후 throw.
+async function runWorkspaceClaude({ srcDir, snap, role, prompt, timeoutMs }) {
+  let answer;
+  try {
+    answer = await callClaude(prompt, {
+      cwd: srcDir,
+      model: role.model,
+      reasoningEffort: role.reasoningEffort,
+      allowedTools: WORKSPACE_TOOLS,
+      permissionMode: 'acceptEdits',
+      timeoutMs,
+    });
+  } catch (err) {
+    // 타임아웃·CLI 실패 등으로 부분 수정이 남을 수 있음 → 스냅샷으로 전체 복원
+    const d = await diffSnapshot(snap).catch(() => null);
+    if (d) await restoreSnapshot(snap, d).catch(() => {});
+    throw err;
+  }
+  const diff = await diffSnapshot(snap);
+  const violations = [...diff.modified, ...diff.added, ...diff.deleted]
+    .filter(p => !latexProject.isEditablePath(p));
+  if (violations.length) {
+    await restoreSnapshot(snap, diff).catch(() => {});
+    throw new Error(`에이전트가 텍스트 소스가 아닌 파일을 변경하려 해 모두 되돌렸습니다: ${violations.join(', ')}`);
+  }
+  return { answer: (answer || '').trim(), diff };
+}
+
+/**
+ * 워크스페이스 편집: 단일 에이전트 세션이 탐색→수정(→웹)을 모두 처리한다.
+ * 반환 형태는 runPaperWriting과 호환 + changedFiles 추가.
+ * @param {{ projectId:number, file:string, mainFile:string, instruction:string, history?:Array, onStep?:Function }} args
+ */
+export async function runWorkspaceEdit({ projectId, file, mainFile, instruction, history = [], onStep = () => {} }) {
+  const role = llmConfig.getRole('writeOrchestrator');
+  if (role.backend !== 'claude') throw new Error('워크스페이스 편집은 claude 백엔드에서만 지원됩니다.');
+  const srcDir = projectSrcDir(projectId);
+  const prompts = await getPrompts();
+  if (!prompts.writeWorkspace) throw new Error('프롬프트 없음: writeWorkspace');
+  const convHistory = formatHistory(history);
+
+  onStep({ stage: 'snapshot', label: '📸 변경 추적 준비…' });
+  const snap = await takeSnapshot(srcDir);
+
+  onStep({ stage: 'agent', label: '🛠️ 워크스페이스에서 작업 중… (탐색→수정)' });
+  const main = await runWorkspaceClaude({
+    srcDir, snap, role,
+    prompt: fillTemplate(prompts.writeWorkspace, { fileName: file, mainFile, instruction, history: convHistory }),
+    timeoutMs: 900_000,
+  });
+
+  let changed = diffToChangedFiles(main.diff);
+
+  // 아무 파일도 안 바뀜 → 읽기 전용 답변 (컴파일 생략)
+  if (!changed.length) {
+    const answer = main.answer || '(결과 없음)';
+    const content = await latexProject.readProjectFile(projectId, file).catch(() => '');
+    return { module: 'workspace', readOnly: true, answer, note: answer, file, content, compiled: null, fixes: 0, log: '', changedFiles: [] };
+  }
+
+  // 컴파일 게이트 + 오류 시 워크스페이스 수정 루프
+  onStep({ stage: 'compile', label: '🔧 컴파일 중…' });
+  let compile = await compileProject(projectId, mainFile, { timeoutMs: 180_000 });
+  let fixes = 0;
+  while (!compile.hasPdf && fixes < MAX_COMPILE_FIXES) {
+    fixes++;
+    onStep({ stage: 'fix', label: `🔧 컴파일 오류 수정 중… (${fixes}회)` });
+    const logTail = (compile.log || '').split('\n').slice(-80).join('\n');
+    // 수정 단계 전용 스냅샷 — 실패/위반 시 이번 수정 시도만 롤백되고 본편집은 유지된다.
+    const snapFix = await takeSnapshot(srcDir);
+    try {
+      await runWorkspaceClaude({
+        srcDir, snap: snapFix, role,
+        prompt: fillTemplate(prompts.writeWorkspace, {
+          fileName: file, mainFile, history: '(직전 편집에 대한 컴파일 오류 수정 단계)',
+          instruction: `방금 편집한 뒤 LaTeX 컴파일이 실패했습니다. 아래 로그 끝부분을 보고 원인 파일·위치를 찾아 **최소 수정**으로 고치세요. 내용을 새로 쓰지 말고 컴파일이 통과하게만 만드세요.\n\n## 컴파일 로그 (끝부분)\n${logTail}`,
+        }),
+        timeoutMs: 600_000,
+      });
+    } catch { break; }
+    compile = await compileProject(projectId, mainFile, { timeoutMs: 180_000 });
+  }
+
+  // 수정 루프 반영해 최종 변경 목록 재계산
+  changed = diffToChangedFiles(await diffSnapshot(snap));
+
+  let note = `🛠️ ${main.answer || '수정 완료'}`;
+  note += `\n\n변경된 파일: ${changed.map(c => `${c.path}${c.status === 'added' ? ' (새 파일)' : ''}`).join(', ') || '(없음)'}`;
+  if (fixes > 0) note += compile.hasPdf ? `\n(컴파일 오류 ${fixes}회 자동 수정)` : `\n(컴파일 오류 자동 수정 ${fixes}회 시도했으나 실패 — 로그 확인)`;
+
+  const content = await latexProject.readProjectFile(projectId, file).catch(() => '');
+  return {
+    module: 'workspace',
+    note,
+    content,
+    file,
+    compiled: compile.hasPdf,
+    fixes,
+    log: (compile.log || '').slice(-8000),
+    changedFiles: changed,
+  };
 }
 
 /**
