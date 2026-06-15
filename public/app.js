@@ -547,6 +547,10 @@ const pdfBody = $('pdfBody');
 const pdfToggleBtn = $('pdfToggleBtn');
 const pdfCloseBtn = $('pdfCloseBtn');
 const pdfSelectBtn = $('pdfSelectBtn');
+const pdfZoomInBtn = $('pdfZoomInBtn');
+const pdfZoomOutBtn = $('pdfZoomOutBtn');
+const pdfZoomResetBtn = $('pdfZoomResetBtn');
+const pdfZoomSelect = $('pdfZoomSelect');
 const paneResizer = $('paneResizer');
 const pdfTitleEl = $('pdfTitle');
 const pdfOpenExternal = $('pdfOpenExternal');
@@ -587,6 +591,9 @@ function applyPdfLayout() {
   if (pdfSelectBtn) {
     pdfSelectBtn.hidden = !pdfState.available;
     pdfSelectBtn.classList.toggle('active', !!pdfViewer?.isSelectionMode?.());
+  }
+  for (const b of [pdfZoomInBtn, pdfZoomOutBtn, pdfZoomResetBtn, pdfZoomSelect]) {
+    if (b) b.hidden = !pdfState.available;
   }
   if (pdfToggleBtn) {
     pdfToggleBtn.hidden = !pdfState.available;
@@ -828,6 +835,24 @@ if (pdfCloseBtn) pdfCloseBtn.addEventListener('click', () => { pdfState.open = f
 if (pdfSelectBtn) pdfSelectBtn.addEventListener('click', () => {
   setPdfSelectionMode(!pdfViewer?.isSelectionMode?.());
 });
+if (pdfZoomInBtn) pdfZoomInBtn.addEventListener('click', () => pdfViewer?.zoomIn?.());
+if (pdfZoomOutBtn) pdfZoomOutBtn.addEventListener('click', () => pdfViewer?.zoomOut?.());
+if (pdfZoomResetBtn) pdfZoomResetBtn.addEventListener('click', () => pdfViewer?.resetZoom?.());
+if (pdfZoomSelect) pdfZoomSelect.addEventListener('change', () => {
+  const v = parseFloat(pdfZoomSelect.value);
+  if (!Number.isNaN(v)) pdfViewer?.setZoom?.(v);
+});
+// 현재 배율(%)을 드롭다운에 표시. 프리셋과 일치하지 않는 값(휠 줌·폭 맞춤 등)은 숨김 옵션에 띄운다.
+function updatePdfZoomDisplay(scale) {
+  if (!pdfZoomSelect) return;
+  const pct = Math.round((scale || 1) * 100);
+  const cur = pdfZoomSelect.querySelector('option[value="cur"]');
+  if (cur) cur.textContent = `${pct}%`;
+  const preset = Array.from(pdfZoomSelect.options)
+    .find(o => o.value !== 'cur' && Math.round(parseFloat(o.value) * 100) === pct);
+  pdfZoomSelect.value = preset ? preset.value : 'cur';
+}
+if (pdfViewer?.onZoomChange) pdfViewer.onZoomChange(updatePdfZoomDisplay);
 
 if (paneResizer) {
   paneResizer.addEventListener('mousedown', (e) => {

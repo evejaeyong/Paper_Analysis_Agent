@@ -187,6 +187,19 @@ body.resizing .pane-resizer { background: var(--accent); }
   cursor: pointer;
 }
 .pdf-head-btn:hover { background: var(--surface-2); }
+/* 확대/축소 비율 선택(현재 % 표시 + 프리셋 변경) */
+.pdf-head-select {
+  height: 26px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 0 4px;
+  cursor: pointer;
+}
+.pdf-head-select:hover { background: var(--surface-2); }
 .pdf-select-btn.active {
   border-color: var(--accent);
   color: var(--accent);
@@ -198,11 +211,16 @@ body.resizing .pane-resizer { background: var(--accent); }
   overflow: auto;
   background: #525659;
   padding: 8px 0;
+  /* 폭에 맞으면 가운데, 확대로 페이지가 넘치면 좌측 정렬(좌측이 잘리지 않고 스크롤 가능) */
+  display: flex;
+  flex-direction: column;
+  align-items: safe center;
 }
 /* PDF.js로 렌더된 페이지 */
 .pdf-page {
   position: relative;
-  margin: 0 auto 10px;
+  flex: 0 0 auto;          /* 확대 시 페이지가 눌려 찌그러지지 않도록 */
+  margin: 0 0 10px;
   background: #fff;
   box-shadow: 0 1px 6px rgba(0, 0, 0, 0.4);
 }

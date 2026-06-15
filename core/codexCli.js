@@ -53,18 +53,25 @@ function safeImagePaths(imagePaths = []) {
 /**
  * codex CLI 호출. stdout 전체를 응답 텍스트로 반환.
  * @param {string} prompt
- * @param {{ timeoutMs?: number, model?: string, reasoningEffort?: string, imagePaths?: string[], sessionId?: string, resume?: string, onMeta?: (meta: {usage?: object, durationMs: number}) => void }} opts
+ * @param {{ timeoutMs?: number, model?: string, reasoningEffort?: string, imagePaths?: string[], cwd?: string, sessionId?: string, resume?: string, onMeta?: (meta: {usage?: object, durationMs: number}) => void }} opts
  * @returns {Promise<string>}
  */
 export async function callCodex(prompt, opts = {}) {
   const timeoutMs = opts.timeoutMs ?? 600_000;
-  const tempDir = await mkdtemp(path.join(os.tmpdir(), 'kpac-codex-'));
+  // 워크스페이스 모드: opts.cwd(프로젝트 src)를 작업 폴더로 두고 그 트리를 직접 수정한다.
+  // 그 외에는 기존대로 호출별 임시 폴더로 격리.
+  const tempDir = opts.cwd ? null : await mkdtemp(path.join(os.tmpdir(), 'kpac-codex-'));
+  const workDir = opts.cwd || tempDir;
 
   try {
     const model = safeModel(opts.model || CODEX_MODEL);
     const reasoningEffort = safeReasoningEffort(opts.reasoningEffort);
     const images = safeImagePaths(opts.imagePaths);
-    const args = ['exec', '--skip-git-repo-check', '--model', model, '-c', `model_reasoning_effort=${reasoningEffort}`];
+    const args = ['exec', '--skip-git-repo-check'];
+    // 워크스페이스(cwd)면 그 폴더 안에서 파일을 직접 쓰도록 sandbox 허용
+    // (claude의 --permission-mode acceptEdits에 해당). exec는 비대화형이라 승인 프롬프트 없음.
+    if (opts.cwd) args.push('--sandbox', 'workspace-write');
+    args.push('--model', model, '-c', `model_reasoning_effort=${reasoningEffort}`);
     for (const imagePath of images) args.push('--image', imagePath);
     args.push('-');
 
@@ -75,7 +82,7 @@ export async function callCodex(prompt, opts = {}) {
         // args separate while allowing cmd.exe wrapper execution there.
         shell: process.platform === 'win32',
         stdio: ['pipe', 'pipe', 'pipe'],
-        cwd: tempDir,
+        cwd: workDir,
       });
 
       proc.stdout.setEncoding('utf8');
@@ -114,7 +121,7 @@ export async function callCodex(prompt, opts = {}) {
       });
     });
   } finally {
-    await rm(tempDir, { recursive: true, force: true }).catch(() => {});
+    if (tempDir) await rm(tempDir, { recursive: true, force: true }).catch(() => {});
   }
 }
 

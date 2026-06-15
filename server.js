@@ -1231,16 +1231,12 @@ async function handleProjectChatEdit(req, res, id) {
       onStep: (ev) => sseWrite(res, ev),
     };
     let result;
-    if (llm.backend === 'claude') {
-      // 워크스페이스 편집(에이전트가 src를 직접 수정). 실패 시 변경은 스냅샷으로
-      // 롤백된 상태이므로 기존 파이프라인으로 안전하게 폴백한다.
-      try {
-        result = await runWorkspaceEdit(args);
-      } catch (err) {
-        sseWrite(res, { stage: 'step', label: `⚠️ 워크스페이스 편집 실패(${err.message}) → 기존 방식으로 재시도` });
-        result = await runPaperWriting(args);
-      }
-    } else {
+    // 워크스페이스 편집(에이전트가 src를 직접 수정) — claude·codex 공용.
+    // 실패 시 변경은 스냅샷으로 롤백된 상태이므로 기존 멀티에이전트 파이프라인으로 안전하게 폴백한다.
+    try {
+      result = await runWorkspaceEdit(args);
+    } catch (err) {
+      sseWrite(res, { stage: 'step', label: `⚠️ 워크스페이스 편집 실패(${err.message}) → 기존 방식으로 재시도` });
       result = await runPaperWriting(args);
     }
     await library.touchProject(id).catch(() => {});

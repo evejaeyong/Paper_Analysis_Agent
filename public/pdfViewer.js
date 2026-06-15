@@ -6,7 +6,8 @@ import * as pdfjsLib from '/vendor/pdfjs/pdf.min.mjs';
 pdfjsLib.GlobalWorkerOptions.workerSrc = '/vendor/pdfjs/pdf.worker.min.mjs';
 
 const SCALE_MIN = 0.4;
-const SCALE_MAX = 3;
+const SCALE_MAX = 5;
+const ZOOM_STEP = 1.15;   // 휠 한 칸/버튼 한 번당 확대 비율
 const WIDTH_GUTTER = 24; // 좌우 여백/스크롤바 여유(px)
 const PDFJS_VERBOSITY = pdfjsLib.VerbosityLevel?.ERRORS ?? 0;
 
@@ -43,6 +44,10 @@ export function createPdfViewer(container) {
   let currentScale = 1;
   let lastSource = null;     // relayout 시 재사용
   let relayoutTimer = 0;
+  let manualZoom = false;    // 사용자가 휠/핀치/버튼으로 직접 확대·축소했는지 (true면 폭 맞춤 안 함)
+  let zoomTimer = 0;         // 휠 줌 디바운스 타이머
+  let pendingZoom = null;    // 디바운스 대기 중 목표 { scale, anchor }
+  let zoomChangeHandler = null; // 배율이 바뀔 때 호출(현재 % 표시 갱신용)
   let selectionMode = false;
   let selectionHandler = null;
   let reverseHandler = null;  // SyncTeX 역방향: 더블클릭 → {page, x, y}(pt, 좌상단)
@@ -624,6 +629,93 @@ export function createPdfViewer(container) {
 
   container.addEventListener('pointerdown', beginSelectionDrag);
 
+  // ---- 확대/축소 (Ctrl/⌘ + 휠, 트랙패드 핀치, 또는 버튼) ----
+  // 페이지를 새 배율로 다시 렌더한다. 휠 연타는 디바운스로 마지막 배율만 렌더한다.
+  // anchor({x,y}: 컨테이너 기준 좌표)가 있으면 그 지점을, 없으면 현재 스크롤 위치를 유지한다.
+  async function rerenderAtScale(targetScale, anchor) {
+    if (!doc) return;
+    const next = Math.max(SCALE_MIN, Math.min(SCALE_MAX, targetScale));
+    const beforeW = container.scrollWidth || 1;
+    const beforeH = container.scrollHeight || 1;
+    const ax0 = anchor ? anchor.x : 0;
+    const ay0 = anchor ? anchor.y : 0;
+    const ratioX = (container.scrollLeft + ax0) / beforeW;
+    const ratioY = (container.scrollTop + ay0) / beforeH;
+
+    currentScale = next;
+    loadToken++;                 // 진행 중 렌더 무효화
+    const token = loadToken;
+    for (const t of renderTasks) { try { t.cancel(); } catch { /* ignore */ } }
+    renderTasks = [];
+    unwrapHighlights();
+    clearSelectionVisuals();
+    clearContainer();
+    index = null;
+    for (let i = 0; i < doc.numPages; i++) {
+      if (token !== loadToken) return;
+      const page = await doc.getPage(i + 1);
+      await renderPage(page, i, currentScale, token);
+    }
+    if (token !== loadToken) return;
+    buildIndex();
+    // 줌 기준점(커서/중앙)이 화면에서 그대로 머물도록 스크롤 복원
+    container.scrollLeft = ratioX * (container.scrollWidth || 1) - ax0;
+    container.scrollTop = ratioY * (container.scrollHeight || 1) - ay0;
+    if (zoomChangeHandler) zoomChangeHandler(currentScale);
+  }
+
+  // factor>1 확대, <1 축소. clientX/Y가 있으면 그 지점을 기준으로 줌.
+  function zoomBy(factor, clientX, clientY) {
+    if (!doc) return;
+    manualZoom = true;
+    const base = pendingZoom ? pendingZoom.scale : currentScale;
+    const target = Math.max(SCALE_MIN, Math.min(SCALE_MAX, base * factor));
+    if (target === base) return;
+    const rect = container.getBoundingClientRect();
+    const anchor = (clientX == null)
+      ? { x: rect.width / 2, y: rect.height / 2 }
+      : { x: clientX - rect.left, y: clientY - rect.top };
+    pendingZoom = { scale: target, anchor };
+    clearTimeout(zoomTimer);
+    zoomTimer = setTimeout(() => {
+      const p = pendingZoom;
+      pendingZoom = null;
+      if (p) rerenderAtScale(p.scale, p.anchor);
+    }, 80);
+  }
+
+  function zoomIn() { zoomBy(ZOOM_STEP, null, null); }
+  function zoomOut() { zoomBy(1 / ZOOM_STEP, null, null); }
+
+  // 폭 맞춤(fit)으로 되돌리기
+  async function resetZoom() {
+    if (!doc) return;
+    manualZoom = false;
+    clearTimeout(zoomTimer);
+    pendingZoom = null;
+    const first = await doc.getPage(1);
+    await rerenderAtScale(fitScale(first), null);
+  }
+
+  // 임의 배율로 설정(예: 50%·100%·200%) — 화면 중앙 기준
+  async function setZoom(scale) {
+    if (!doc) return;
+    manualZoom = true;
+    clearTimeout(zoomTimer);
+    pendingZoom = null;
+    const rect = container.getBoundingClientRect();
+    await rerenderAtScale(scale, { x: rect.width / 2, y: rect.height / 2 });
+  }
+
+  function getZoom() { return currentScale; }
+
+  // Ctrl/⌘ + 휠(또는 트랙패드 핀치)일 때만 줌. 평소 휠은 스크롤 그대로.
+  container.addEventListener('wheel', (e) => {
+    if (!doc || !(e.ctrlKey || e.metaKey)) return;
+    e.preventDefault();
+    zoomBy(e.deltaY < 0 ? ZOOM_STEP : 1 / ZOOM_STEP, e.clientX, e.clientY);
+  }, { passive: false });
+
   // 모든 텍스트 레이어 span을 평탄화해 검색 인덱스 구축.
   function buildIndex() {
     const norm = [];                 // 정규화 문자 배열
@@ -892,6 +984,7 @@ export function createPdfViewer(container) {
   async function load(source) {
     await destroy();
     selectionMode = false;
+    manualZoom = false;   // 새 문서는 항상 폭 맞춤으로 시작
     lastSource = source;
     const token = loadToken;
     let task;
@@ -914,6 +1007,11 @@ export function createPdfViewer(container) {
     }
     if (token !== loadToken) return;
     buildIndex();
+    if (zoomChangeHandler) zoomChangeHandler(currentScale);
+  }
+
+  function onZoomChange(callback) {
+    zoomChangeHandler = typeof callback === 'function' ? callback : null;
   }
 
   function highlightQuote(quote, opts = {}) {
@@ -951,6 +1049,7 @@ export function createPdfViewer(container) {
 
   function relayout() {
     if (!doc || !lastSource) return;
+    if (manualZoom) return;   // 사용자가 직접 확대/축소한 상태면 폭 맞춤 재계산을 하지 않음
     clearTimeout(relayoutTimer);
     relayoutTimer = setTimeout(() => {
       // 같은 소스를 다시 로드(현재 폭에 맞춰 재렌더). 로컬 ArrayBuffer는 destroy 후 전달된 버퍼가
@@ -1003,5 +1102,11 @@ export function createPdfViewer(container) {
     isSelectionMode,
     onReverseSearch,
     setFigureCandidates,
+    zoomIn,
+    zoomOut,
+    resetZoom,
+    setZoom,
+    getZoom,
+    onZoomChange,
   };
 }
