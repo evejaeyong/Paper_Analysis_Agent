@@ -143,6 +143,19 @@
           <div class="pdf-pane-head">
             <span id="pdfTitle" class="pdf-title">논문</span>
             <span class="spacer"></span>
+            <button type="button" id="pdfZoomOutBtn" class="pdf-head-btn" title="축소 (Ctrl+휠)" aria-label="축소">−</button>
+            <select id="pdfZoomSelect" class="pdf-head-select" title="확대/축소 비율" aria-label="확대/축소 비율">
+              <option value="cur" hidden>100%</option>
+              <option value="0.5">50%</option>
+              <option value="0.75">75%</option>
+              <option value="1">100%</option>
+              <option value="1.25">125%</option>
+              <option value="1.5">150%</option>
+              <option value="2">200%</option>
+              <option value="3">300%</option>
+            </select>
+            <button type="button" id="pdfZoomInBtn" class="pdf-head-btn" title="확대 (Ctrl+휠)" aria-label="확대">+</button>
+            <button type="button" id="pdfZoomResetBtn" class="pdf-head-btn" title="패널 폭에 맞춤" aria-label="패널 폭에 맞춤">⊡</button>
             <button type="button" id="pdfSelectBtn" class="pdf-head-btn pdf-select-btn" title="PDF 영역 선택" aria-label="PDF 영역 선택">▣</button>
             <a id="pdfOpenExternal" class="pdf-head-btn" href="#" target="_blank" rel="noopener" title="새 창에서 열기">↗</a>
             <button type="button" id="pdfCloseBtn" class="pdf-head-btn" title="패널 닫기" aria-label="패널 닫기">×</button>

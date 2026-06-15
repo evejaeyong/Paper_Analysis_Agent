@@ -1,8 +1,10 @@
 // agents/paperWriting.js
 // 논문 작성팀: 오케스트레이터가 지시를 분류 → writing/figure/citation 모듈 실행
 // → 컴파일 게이트(에러 시 writeCompile 수정 루프). STORM식 계획-우선 + self-reflection.
+import path from 'node:path';
 import { callLLM } from '../core/llm.js';
 import { callClaude } from '../core/claudeClient.js';
+import { callCodex } from '../core/codexCli.js';
 import * as llmConfig from '../core/llmConfig.js';
 import { getCurrent as getPrompts, fillTemplate } from '../core/promptStore.js';
 import * as latexProject from '../core/latexProject.js';
@@ -161,12 +163,18 @@ async function runResearchStep(projectId, rawInstruction, stepInstruction, mainF
   }
 }
 
-// 일반 채팅(읽기 전용) → 답변 텍스트. 전문 모듈에 안 맞는 요청을 튜닝 없는 도우미가 답함.
-async function runChatStep(question, history) {
+// 일반 채팅(읽기 전용) → 답변 텍스트. 전문 모듈에 안 맞는 요청, 또는 "내용을 md/텍스트로
+// 만들어 채팅에 보여줘" 류 요청을 튜닝 없는 도우미가 답함(파일은 절대 수정 안 함).
+// document: 현재 프로젝트 .tex 본문(요약·md 변환 등에 필요). 비면 자리표시자.
+async function runChatStep(question, history, document = '') {
   const prompts = await getPrompts();
   const role = llmConfig.getRole('writeChat');
   try {
-    const out = await callLLM(fillTemplate(prompts.writeChat, { question, history: history || '(이전 대화 없음)' }), {
+    const out = await callLLM(fillTemplate(prompts.writeChat, {
+      question,
+      history: history || '(이전 대화 없음)',
+      document: document ? document.slice(0, 60000) : '(논문 내용 없음)',
+    }), {
       backend: role.backend, model: role.model, reasoningEffort: role.reasoningEffort, timeoutMs: 180_000,
     });
     return (out || '').trim();
@@ -185,13 +193,14 @@ async function runEditStep({ projectId, file, module, content, instruction, hist
   return multiAgentEdit({ module, fileName: file, content, instruction, onStep, history });
 }
 
-// ---------------- 워크스페이스 편집 (claude 백엔드 전용) ----------------
-// 프로젝트 src 디렉터리를 cwd로 두고 Claude Code가 Read/Grep/Glob/Edit/Write로
+// ---------------- 워크스페이스 편집 (claude·codex 공용) ----------------
+// 프로젝트 src 디렉터리를 cwd로 두고 에이전트(Claude Code 또는 Codex)가 파일을
 // 직접 탐색·수정한다. 기존 "전문을 프롬프트에 넣고 전문을 돌려받는" 파이프라인과 달리
 // 큰 파일·멀티파일 수정이 가능하고 토큰도 적게 쓴다. 변경은 스냅샷 diff로 추적하고,
 // 텍스트 소스 외 파일이 변경되면 전부 롤백한다.
 
 const WORKSPACE_TOOLS = ['Read', 'Grep', 'Glob', 'Edit', 'Write', 'WebFetch', 'WebSearch'];
+const WS_IMAGE_RE = /([\w./\\-]+\.(?:png|jpe?g|gif|webp|bmp))/gi;
 
 function diffToChangedFiles(diff) {
   return [
@@ -201,18 +210,51 @@ function diffToChangedFiles(diff) {
   ];
 }
 
-// 워크스페이스에서 claude 1회 실행. 텍스트 외 파일 변경 시 롤백 후 throw.
-async function runWorkspaceClaude({ srcDir, snap, role, prompt, timeoutMs }) {
+// 지시·대화에서 언급된 그림 파일을 프로젝트 안에서 찾아 절대경로로 반환.
+// codex는 파일을 셸로 읽으면 이미지가 바이너리라 '보이지' 않으므로, 여기서 찾은
+// 그림을 --image 로 첨부해 모델이 실제로 그림을 보게 한다. (claude는 Read로 직접 봄)
+async function findReferencedImagePaths(projectId, srcDir, text) {
+  const wanted = new Set();
+  for (const m of String(text || '').matchAll(WS_IMAGE_RE)) {
+    wanted.add(m[1].replace(/\\/g, '/').toLowerCase());
+  }
+  if (!wanted.size) return [];
+  const wantedBases = new Set([...wanted].map(w => w.split('/').pop()));
+  const files = await latexProject.listFiles(projectId).catch(() => []);
+  const out = [];
+  for (const f of files) {
+    if (f.dir) continue;
+    const lower = f.path.replace(/\\/g, '/').toLowerCase();
+    const base = lower.split('/').pop();
+    if (wanted.has(lower) || wantedBases.has(base)) out.push(path.join(srcDir, f.path));
+  }
+  return [...new Set(out)].slice(0, 6);
+}
+
+// 워크스페이스에서 에이전트 1회 실행(백엔드별). 텍스트 외 파일 변경 시 롤백 후 throw.
+// claude: Read/Grep/Glob/Edit/Write 도구로 cwd를 직접 수정(acceptEdits).
+// codex: cwd를 sandbox=workspace-write 로 직접 수정. 그림은 imagePaths(--image)로 첨부.
+async function runWorkspaceAgent({ srcDir, snap, role, prompt, imagePaths = [], timeoutMs }) {
   let answer;
   try {
-    answer = await callClaude(prompt, {
-      cwd: srcDir,
-      model: role.model,
-      reasoningEffort: role.reasoningEffort,
-      allowedTools: WORKSPACE_TOOLS,
-      permissionMode: 'acceptEdits',
-      timeoutMs,
-    });
+    if (role.backend === 'codex') {
+      answer = await callCodex(prompt, {
+        cwd: srcDir,
+        model: role.model,
+        reasoningEffort: role.reasoningEffort,
+        imagePaths,
+        timeoutMs,
+      });
+    } else {
+      answer = await callClaude(prompt, {
+        cwd: srcDir,
+        model: role.model,
+        reasoningEffort: role.reasoningEffort,
+        allowedTools: WORKSPACE_TOOLS,
+        permissionMode: 'acceptEdits',
+        timeoutMs,
+      });
+    }
   } catch (err) {
     // 타임아웃·CLI 실패 등으로 부분 수정이 남을 수 있음 → 스냅샷으로 전체 복원
     const d = await diffSnapshot(snap).catch(() => null);
@@ -236,19 +278,32 @@ async function runWorkspaceClaude({ srcDir, snap, role, prompt, timeoutMs }) {
  */
 export async function runWorkspaceEdit({ projectId, file, mainFile, instruction, history = [], onStep = () => {} }) {
   const role = llmConfig.getRole('writeOrchestrator');
-  if (role.backend !== 'claude') throw new Error('워크스페이스 편집은 claude 백엔드에서만 지원됩니다.');
+  if (role.backend !== 'claude' && role.backend !== 'codex') {
+    throw new Error(`워크스페이스 편집을 지원하지 않는 백엔드: ${role.backend}`);
+  }
   const srcDir = projectSrcDir(projectId);
   const prompts = await getPrompts();
   if (!prompts.writeWorkspace) throw new Error('프롬프트 없음: writeWorkspace');
   const convHistory = formatHistory(history);
 
+  // codex는 그림을 셸로 못 보므로, 지시가 가리키는 그림을 --image 로 첨부해 모델이 보게 한다.
+  // claude는 Read 도구로 직접 이미지를 보므로 첨부 불필요.
+  let imagePaths = [];
+  let imageNote = '';
+  if (role.backend === 'codex') {
+    imagePaths = await findReferencedImagePaths(projectId, srcDir, `${instruction}\n${convHistory}`);
+    if (imagePaths.length) {
+      imageNote = `\n\n## 함께 제공된 그림 파일\n다음 그림이 이미지로 첨부되어 직접 볼 수 있습니다: ${imagePaths.map(p => path.basename(p)).join(', ')}. 이 그림의 실제 내용을 작업에 반영하세요.`;
+    }
+  }
+
   onStep({ stage: 'snapshot', label: '📸 변경 추적 준비…' });
   const snap = await takeSnapshot(srcDir);
 
   onStep({ stage: 'agent', label: '🛠️ 워크스페이스에서 작업 중… (탐색→수정)' });
-  const main = await runWorkspaceClaude({
-    srcDir, snap, role,
-    prompt: fillTemplate(prompts.writeWorkspace, { fileName: file, mainFile, instruction, history: convHistory }),
+  const main = await runWorkspaceAgent({
+    srcDir, snap, role, imagePaths,
+    prompt: fillTemplate(prompts.writeWorkspace, { fileName: file, mainFile, instruction, history: convHistory }) + imageNote,
     timeoutMs: 900_000,
   });
 
@@ -272,7 +327,7 @@ export async function runWorkspaceEdit({ projectId, file, mainFile, instruction,
     // 수정 단계 전용 스냅샷 — 실패/위반 시 이번 수정 시도만 롤백되고 본편집은 유지된다.
     const snapFix = await takeSnapshot(srcDir);
     try {
-      await runWorkspaceClaude({
+      await runWorkspaceAgent({
         srcDir, snap: snapFix, role,
         prompt: fillTemplate(prompts.writeWorkspace, {
           fileName: file, mainFile, history: '(직전 편집에 대한 컴파일 오류 수정 단계)',
@@ -358,7 +413,8 @@ export async function runPaperWriting({ projectId, file, mainFile, instruction, 
     } else if (st.module === 'chat') {
       onStep({ stage: 'step', label: `${tag}💬 답변 생성…` });
       const ctx = convHistory + (priorContext ? `\n\n[이전 단계 결과]\n${priorContext}` : '');
-      const ans = await runChatStep(st.instruction, ctx);
+      const docText = await collectProjectText(projectId, mainFile).catch(() => '');
+      const ans = await runChatStep(st.instruction, ctx, docText);
       readOnlyAnswers.push(`💬 ${ans}`);
       priorContext += `\n[채팅 답변] ${ans}\n`;
     } else {
