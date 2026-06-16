@@ -1,6 +1,6 @@
 {
   "name": "paa",
-  "version": "0.6.2",
+  "version": "0.6.3",
   "private": true,
   "description": "영어 논문 PDF를 멀티에이전트로 분석하고 LaTeX 논문을 작성·컴파일하는 데스크탑 콘솔 (Korean Paper Agent Console)",
   "type": "module",
@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "better-sqlite3": "^12.10.0",
+    "electron-updater": "^6.3.9",
     "fflate": "^0.8.3",
     "fix-path": "^5.0.0",
     "pdf-parse": "^1.1.4"
@@ -35,6 +36,11 @@
   "build": {
     "appId": "com.paa.app",
     "productName": "PAA",
+    "publish": {
+      "provider": "github",
+      "owner": "evejaeyong",
+      "repo": "Paper_Analysis_Agent"
+    },
     "directories": {
       "output": "dist"
     },

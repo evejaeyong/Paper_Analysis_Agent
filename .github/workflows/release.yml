@@ -80,9 +80,12 @@ jobs:
         with:
           tag_name: ${{ steps.ref.outputs.ref }}
           fail_on_unmatched_files: true
+          # latest.yml + setup.blockmap 는 electron-updater 자동 업데이트에 필요(설치형)
           files: |
             dist/PAA-${{ steps.ref.outputs.version }}.exe
             dist/PAA-${{ steps.ref.outputs.version }}-setup.exe
+            dist/PAA-${{ steps.ref.outputs.version }}-setup.exe.blockmap
+            dist/latest.yml
 
       - name: Upload macOS artifacts
         if: matrix.os == 'macos-latest'
