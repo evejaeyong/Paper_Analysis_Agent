@@ -1,4 +1,4 @@
-# Korean Paper Agent Console (KPAC) · v0.6.5
+# Korean Paper Agent Console (KPAC) · v0.6.6
 
 영어 논문을 **읽고 분석**하는 것에서 끝나지 않고, LaTeX 논문을 **직접 쓰고 컴파일**하는 데까지 돕는 데스크탑 앱입니다. 두 개의 작업 모드로 구성됩니다.
 
