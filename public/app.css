@@ -1631,6 +1631,27 @@ button { font-family: inherit; }
 .diff-chip { font-size: 11px; padding: 1px 7px; border-radius: 10px; }
 .diff-chip.diff-add { background: rgba(63, 185, 80, 0.22); color: #7ee787; }
 .diff-chip.diff-del { background: rgba(248, 81, 73, 0.20); color: #ff9492; }
+.latex-diff-hint { font-size: 11px; color: var(--muted); opacity: .85; }
+/* hunk별 수락/거절 diff 뷰 */
+.latex-partial-diff {
+  height: 100%; overflow: auto; background: #0e0f13;
+  font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12.5px; line-height: 1.5;
+  padding: 8px 0 40px;
+}
+.latex-partial-diff .diff-line { white-space: pre-wrap; word-break: break-word; padding: 0 12px; }
+.latex-partial-diff .diff-line.ctx { color: #8b949e; }
+.latex-partial-diff .diff-line.fold { color: #6e7681; font-style: italic; background: #15171c; }
+.latex-partial-diff .diff-line.add { background: rgba(63, 185, 80, 0.16); color: #7ee787; }
+.latex-partial-diff .diff-line.del { background: rgba(248, 81, 73, 0.16); color: #ff9492; }
+.latex-partial-diff .diff-hunk {
+  margin: 8px 8px; border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
+}
+.latex-partial-diff .hunk-head {
+  display: flex; align-items: center; gap: 6px; cursor: pointer; user-select: none;
+  padding: 6px 12px; background: #1a1c22; color: var(--text); font-family: inherit; font-size: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.latex-partial-diff .hunk-head input { cursor: pointer; }
 .latex-filetree {
   flex: 0 0 200px; min-width: 120px; overflow: auto;
   border-right: 1px solid var(--border); background: #15171c; padding: 6px 0;

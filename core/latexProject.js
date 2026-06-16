@@ -162,7 +162,10 @@ export async function listFiles(projectId) {
     catch { return; }
     for (const e of entries) {
       const rel = relDir ? `${relDir}/${e.name}` : e.name;
-      if (e.isDirectory()) { allDirs.push(rel); await walk(path.join(absDir, e.name), rel); continue; }
+      if (e.isDirectory()) {
+        if (e.name === '.claude') continue; // 도구 설정(.claude/agents 등)은 트리에 숨김
+        allDirs.push(rel); await walk(path.join(absDir, e.name), rel); continue;
+      }
       if (isArtifactPath(rel)) continue; // 컴파일 산출물 숨김(.pdf 제외)
       let size = 0;
       try { size = (await fs.stat(path.join(absDir, e.name))).size; } catch { /* ignore */ }
@@ -307,13 +310,50 @@ export async function writeProjectFile(projectId, relPath, content) {
   await fs.writeFile(abs, String(content ?? ''), 'utf8');
 }
 
-// zip 다운로드용: 소스 + 결과 PDF 포함, 중간 산출물(.aux/.log/.synctex.gz 등)은 제외.
+// 작성팀 하위 에이전트(프로젝트별 src/.claude/agents/). 기존 작성팀 프롬프트(writeBody 등)에서
+// "전체 파일 반환" 같은 STORM 입출력 배관을 떼어내고, Edit로 부분 수정하는 워크스페이스 헤더를 붙여
+// 생성한다. 프롬프트가 단일 출처이므로 **채팅마다 자동 갱신**(덮어씀)한다.
+const AGENTS_FROM_PROMPT = [
+  { file: 'writer.md', name: 'writer', key: 'writeBody', desc: '본문 텍스트 작성·수정·요약·번역·재구성(문단/섹션 단위).' },
+  { file: 'figure.md', name: 'figure', key: 'writeFigure', desc: 'tikz/pgfplots 그림과 표(table) 생성·수정. 표 작업은 반드시 이 에이전트.' },
+  { file: 'citation.md', name: 'citation', key: 'writeCitation', desc: '빈 \\cite{} 를 기존 .bib 키로 채움·인용 정리(새 키 생성 금지).' },
+  { file: 'reviewer.md', name: 'reviewer', key: 'writeReview', desc: '작성/수정 후 흐름·문법·일관성·작성 rule 점검(문제 부분만 최소 수정).' },
+];
+
+const AGENT_HEADER = '[워크스페이스 하위 에이전트] 당신은 프로젝트 폴더에서 **Edit 도구로 파일을 직접 수정**합니다. 전체 파일을 반환하거나 코드블록으로 출력하지 말고, **바뀌는 부분만 Edit로 최소 수정**하세요. 요청하지 않은 부분·기존 내용을 통째로 지우지 마세요. 작업 후 무엇을 왜 바꿨는지 1~3문장으로 보고합니다.\n\n--- 아래는 당신의 전문 작성 규칙입니다 ---';
+
+// 기존 프롬프트 → 서브에이전트 본문: 치환변수({{...}})가 든 섹션과 "전체 파일 반환/코드블록" 류 줄 제거.
+export function promptToAgentBody(text) {
+  const sections = String(text || '').split(/\n(?=##\s)/);
+  const kept = sections.filter(s => !/\{\{/.test(s)); // 입력 치환 섹션(파일/계획/이전대화/지시) 제거
+  const body = kept.join('\n').split('\n')
+    .filter(l => !/(전체 파일|코드블록|일부만 반환|self-reflection|반환합니다)/.test(l))
+    .join('\n');
+  return body.replace(/\n{3,}/g, '\n\n').trim();
+}
+
+// 프로젝트 src/.claude/agents/ 에 하위 에이전트 정의를 (현재 프롬프트 기준으로) 생성·갱신.
+// prompts: getCurrent() 결과 객체. 반환: agents 디렉터리.
+export async function writeProjectAgents(projectId, prompts) {
+  const dir = path.join(projectSrcDir(projectId), '.claude', 'agents');
+  await ensureDir(dir);
+  for (const a of AGENTS_FROM_PROMPT) {
+    const src = prompts && prompts[a.key];
+    if (!src) continue;
+    const md = `---\nname: ${a.name}\ndescription: ${a.desc}\ntools: Read, Grep, Glob, Edit\n---\n${AGENT_HEADER}\n\n${promptToAgentBody(src)}\n`;
+    await fs.writeFile(path.join(dir, a.file), md, 'utf8'); // 단일 출처(프롬프트) → 매번 갱신
+  }
+  return dir;
+}
+
+// zip 다운로드용: 소스 + 결과 PDF 포함, 중간 산출물(.aux/.log/.synctex.gz 등)·.claude 설정은 제외.
 const ZIP_SKIP_EXT = new Set([
   '.aux', '.log', '.out', '.blg', '.fls', '.fdb_latexmk', '.toc', '.lof', '.lot',
   '.nav', '.snm', '.vrb', '.xdv', '.dvi', '.idx', '.ind', '.ilg', '.bcf',
 ]);
 function skipForZip(rel) {
-  const l = rel.toLowerCase();
+  const l = rel.toLowerCase().replace(/\\/g, '/');
+  if (l === '.claude' || l.startsWith('.claude/')) return true; // 에이전트 정의 등 도구 설정은 ZIP 제외
   if (l.endsWith('.synctex.gz') || l.endsWith('.run.xml')) return true;
   return ZIP_SKIP_EXT.has(path.extname(l));
 }

@@ -1838,14 +1838,86 @@ function showLatexEditorPane() {
   if (latexEditor) setTimeout(() => latexEditor.layout(), 0);
 }
 
-// 수정 전/후 diff 비교 열기
+// 줄 단위 LCS diff → 블록 목록(equal | change{before,after}). change 블록 하나가 hunk 1개.
+function lineDiffBlocks(before, after) {
+  const a = String(before ?? '').split('\n');
+  const b = String(after ?? '').split('\n');
+  const n = a.length, m = b.length;
+  if (n > 2500 || m > 2500) return [{ type: 'change', before: a, after: b }]; // 너무 크면 전체 한 덩어리
+  const dp = [];
+  for (let i = 0; i <= n; i++) dp.push(new Int32Array(m + 1));
+  for (let i = n - 1; i >= 0; i--)
+    for (let j = m - 1; j >= 0; j--)
+      dp[i][j] = a[i] === b[j] ? dp[i + 1][j + 1] + 1 : Math.max(dp[i + 1][j], dp[i][j + 1]);
+  const blocks = [];
+  const pushEq = (line) => { const last = blocks[blocks.length - 1]; if (last && last.type === 'equal') last.lines.push(line); else blocks.push({ type: 'equal', lines: [line] }); };
+  const pushChg = (side, line) => { let last = blocks[blocks.length - 1]; if (!last || last.type !== 'change') { last = { type: 'change', before: [], after: [] }; blocks.push(last); } last[side].push(line); };
+  let i = 0, j = 0;
+  while (i < n && j < m) {
+    if (a[i] === b[j]) { pushEq(a[i]); i++; j++; }
+    else if (dp[i + 1][j] >= dp[i][j + 1]) { pushChg('before', a[i]); i++; }
+    else { pushChg('after', b[j]); j++; }
+  }
+  while (i < n) { pushChg('before', a[i]); i++; }
+  while (j < m) { pushChg('after', b[j]); j++; }
+  return blocks;
+}
+
+// 선택된 hunk(acceptedSet)는 after, 나머지는 before로 파일 내용 재구성.
+function reconstructFromBlocks(blocks, acceptedSet) {
+  const out = [];
+  let ci = 0;
+  for (const blk of blocks) {
+    if (blk.type === 'equal') { for (const l of blk.lines) out.push(l); }
+    else { for (const l of (acceptedSet.has(ci) ? blk.after : blk.before)) out.push(l); ci++; }
+  }
+  return out.join('\n');
+}
+
+// hunk별 수락/거절 체크박스가 있는 diff 뷰를 렌더(긴 동일 구간은 접음).
+function renderPartialDiff(host, blocks) {
+  host.innerHTML = '';
+  const wrap = document.createElement('div');
+  wrap.className = 'latex-partial-diff';
+  let ci = 0;
+  for (const blk of blocks) {
+    if (blk.type === 'equal') {
+      const lines = blk.lines;
+      const show = (arr, cls) => arr.forEach(t => { const d = document.createElement('div'); d.className = 'diff-line ctx'; d.textContent = '  ' + t; wrap.appendChild(d); });
+      if (lines.length > 6) {
+        show(lines.slice(0, 3));
+        const more = document.createElement('div'); more.className = 'diff-line fold'; more.textContent = `  ⋯ ${lines.length - 6}줄 생략 ⋯`; wrap.appendChild(more);
+        show(lines.slice(-3));
+      } else show(lines);
+      continue;
+    }
+    const idx = ci++;
+    const hunk = document.createElement('div');
+    hunk.className = 'diff-hunk';
+    const head = document.createElement('label');
+    head.className = 'hunk-head';
+    const cb = document.createElement('input');
+    cb.type = 'checkbox'; cb.className = 'hunk-accept'; cb.checked = true; cb.dataset.hunk = String(idx);
+    const cap = document.createElement('span'); cap.textContent = ` 변경 #${idx + 1} 적용`;
+    head.append(cb, cap);
+    hunk.appendChild(head);
+    for (const t of blk.before) { const d = document.createElement('div'); d.className = 'diff-line del'; d.textContent = '− ' + t; hunk.appendChild(d); }
+    for (const t of blk.after) { const d = document.createElement('div'); d.className = 'diff-line add'; d.textContent = '+ ' + t; hunk.appendChild(d); }
+    wrap.appendChild(hunk);
+  }
+  if (ci === 0) { const d = document.createElement('div'); d.className = 'diff-line fold'; d.textContent = '(텍스트 변경 없음)'; wrap.appendChild(d); }
+  host.appendChild(wrap);
+}
+
+// 수정 전/후 diff 비교 열기 (hunk별 수락/거절)
 function showLatexDiff(before, after, file) {
-  if (!latexEditor || !latexEditor.showDiff || !latexDiffHost) return;
-  state.latexDiffPending = { before, after, file };
+  if (!latexDiffHost) return;
+  const blocks = lineDiffBlocks(before, after);
+  state.latexDiffPending = { before, after, file, blocks };
   if (latexAssetView) latexAssetView.hidden = true;
   if (latexEditorHost) latexEditorHost.style.display = 'none';
   latexDiffHost.style.display = '';
-  latexEditor.showDiff(latexDiffHost, file, before, after);
+  renderPartialDiff(latexDiffHost, blocks);
   if (latexDiffBar) latexDiffBar.hidden = false;
 }
 
@@ -1853,10 +1925,28 @@ function showLatexDiff(before, after, file) {
 function closeLatexDiff() {
   state.latexDiffPending = null;
   if (latexEditor && latexEditor.closeDiff) latexEditor.closeDiff();
-  if (latexDiffHost) latexDiffHost.style.display = 'none';
+  if (latexDiffHost) { latexDiffHost.style.display = 'none'; latexDiffHost.innerHTML = ''; }
   if (latexDiffBar) latexDiffBar.hidden = true;
   if (latexEditorHost) latexEditorHost.style.display = '';
   if (latexEditor) setTimeout(() => latexEditor.layout(), 0);
+}
+
+// "선택 적용": 체크된 hunk만 반영해 파일 재구성 → 저장 → 재컴파일
+async function applyPartialDiff() {
+  const d = state.latexDiffPending;
+  if (!d || !latexEditor) { closeLatexDiff(); return; }
+  if (d.file !== state.currentLatexFile) { showToast('다른 파일로 이동해 적용할 수 없습니다'); closeLatexDiff(); return; }
+  const accepted = new Set();
+  if (latexDiffHost) latexDiffHost.querySelectorAll('input.hunk-accept').forEach(cb => { if (cb.checked) accepted.add(Number(cb.dataset.hunk)); });
+  const total = d.blocks.filter(b => b.type === 'change').length;
+  const content = reconstructFromBlocks(d.blocks, accepted);
+  closeLatexDiff();
+  latexEditor.setContent(d.file, content);
+  state.latexDirty = true;
+  updateLatexSaveState();
+  await saveCurrentLatexFile();
+  await compileLatex();
+  showToast(accepted.size === total ? '모든 변경 적용' : `변경 ${accepted.size}/${total}개 적용 (나머지는 되돌림)`);
 }
 
 // "되돌리기": 수정 전 내용으로 파일을 되돌리고 재컴파일
@@ -2749,7 +2839,7 @@ if (latexChatClear) latexChatClear.addEventListener('click', () => {
   if (state.latexChatHistory.length && !confirm('이 프로젝트의 채팅 로그를 지울까요?')) return;
   clearLatexChat();
 });
-if (latexDiffKeep) latexDiffKeep.addEventListener('click', () => closeLatexDiff());
+if (latexDiffKeep) latexDiffKeep.addEventListener('click', () => applyPartialDiff());
 if (latexDiffRevert) latexDiffRevert.addEventListener('click', () => revertLatexDiff());
 
 // 파일 트리 우클릭 → 파일/폴더면 삭제, 빈 공간이면 새 파일
