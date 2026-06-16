@@ -31,9 +31,29 @@ function stripFence(text) {
   return f !== null ? f : text;
 }
 
+// 수정 결과가 "전체 파일"이 아니라 부분·설명문으로 의심되면 사유 문자열, 정상이면 null.
+// 전체 파일을 덮어쓰는 STORM 경로에서 기존 내용이 통째로 사라지는 사고를 막는다.
+function badFullFileReason(original, edited) {
+  const o = (original || '').trim();
+  const e = (edited || '').trim();
+  if (!e) return '빈 내용';
+  if (o.length <= 800) return null; // 원본이 짧으면 비교 무의미(전체 재작성 정상 가능)
+  // 1) 원본은 상당한데 결과가 절반 미만 → 부분만 반환/출력 잘림 의심
+  if (e.length < o.length * 0.5) {
+    return `결과가 원본의 ${Math.round(e.length / o.length * 100)}%로 비정상적으로 짧습니다(부분만 반환·출력 잘림 의심)`;
+  }
+  // 2) 원본은 LaTeX인데 결과에 LaTeX 명령이 대부분 사라짐 → 설명문이 코드블록에 들어온 의심
+  const oCmds = (o.match(/\\[a-zA-Z@]+/g) || []).length;
+  const eCmds = (e.match(/\\[a-zA-Z@]+/g) || []).length;
+  if (oCmds > 10 && eCmds < Math.max(3, oCmds * 0.2)) {
+    return 'LaTeX 명령이 대부분 사라졌습니다(설명문이 코드블록에 들어온 의심)';
+  }
+  return null;
+}
+
 // 모듈 1회 실행: 프롬프트 채우고 LLM 호출 → {content, note}.
 // 코드블록(수정된 전체 파일)을 못 찾으면 형식 리마인더와 함께 1회 재시도.
-const FENCE_REMINDER = '\n\n[중요] 반드시 수정된 **전체 파일 내용**을 하나의 ```latex 코드블록으로 반환하세요. 변경이 없어도 파일 전체를 코드블록에 담아야 합니다. 설명만 적고 코드블록을 빠뜨리지 마세요.';
+const FENCE_REMINDER = '\n\n[중요] 반드시 수정된 **전체 파일 내용**을 하나의 ```latex 코드블록으로 반환하세요. 변경이 없어도 파일 전체를 코드블록에 담아야 합니다. 새로 쓴 부분만 보내지 말고 기존 내용을 포함한 전체를 담으세요. 설명만 적고 코드블록을 빠뜨리지 마세요.';
 async function runModule(promptKey, roleName, vars) {
   const prompts = await getPrompts();
   const tpl = prompts[promptKey];
@@ -44,12 +64,19 @@ async function runModule(promptKey, roleName, vars) {
 
   let out = await callLLM(filled, opts);
   let edited = extractFenced(out);
-  if (edited === null) { // 형식 슬립 → 리마인더 붙여 1회 재시도
+  // 형식 슬립(코드블록 없음) 또는 부분/설명문 의심 → 리마인더 붙여 1회 재시도
+  if (edited === null || badFullFileReason(vars.content, edited)) {
     out = await callLLM(filled + FENCE_REMINDER, opts);
-    edited = extractFenced(out);
+    const retry = extractFenced(out);
+    if (retry !== null) edited = retry;
   }
   if (edited === null) {
     throw new Error('AI가 수정된 전체 파일(```latex 코드블록)을 반환하지 않았습니다. 파일이 너무 크거나(출력 잘림) 형식 오류일 수 있어요.');
+  }
+  // 재시도 후에도 부분/설명문으로 의심되면 덮어쓰지 않고 중단(기존 내용 보존)
+  const bad = badFullFileReason(vars.content, edited);
+  if (bad) {
+    throw new Error(`기존 내용이 손상될 수 있어 적용을 중단했습니다: ${bad}. 다시 시도하거나 범위를 좁혀 지시해 주세요.`);
   }
   const note = (out.split('```')[0] || '').trim() || '수정 완료';
   return { content: edited.replace(/\s*$/, '') + '\n', note };
@@ -199,7 +226,9 @@ async function runEditStep({ projectId, file, module, content, instruction, hist
 // 큰 파일·멀티파일 수정이 가능하고 토큰도 적게 쓴다. 변경은 스냅샷 diff로 추적하고,
 // 텍스트 소스 외 파일이 변경되면 전부 롤백한다.
 
-const WORKSPACE_TOOLS = ['Read', 'Grep', 'Glob', 'Edit', 'Write', 'WebFetch', 'WebSearch'];
+// Agent: 채팅 에이전트가 오케스트레이터로서 하위 에이전트(작성·그림·인용·검수)에게
+// 위임할 수 있게 한다. acceptEdits는 하위 에이전트에도 상속된다.
+const WORKSPACE_TOOLS = ['Read', 'Grep', 'Glob', 'Edit', 'Write', 'WebFetch', 'WebSearch', 'Agent'];
 const WS_IMAGE_RE = /([\w./\\-]+\.(?:png|jpe?g|gif|webp|bmp))/gi;
 
 function diffToChangedFiles(diff) {
@@ -304,12 +333,22 @@ export async function runWorkspaceEdit({ projectId, file, mainFile, instruction,
   onStep({ stage: 'snapshot', label: '📸 변경 추적 준비…' });
   const snap = await takeSnapshot(srcDir);
 
+  const mainPrompt = fillTemplate(prompts.writeWorkspace, { fileName: file, mainFile, instruction, history: convHistory }) + imageNote;
+
   onStep({ stage: 'agent', label: '🛠️ 워크스페이스에서 작업 중… (탐색→수정)' });
-  const main = await runWorkspaceAgent({
-    srcDir, snap, role, imagePaths,
-    prompt: fillTemplate(prompts.writeWorkspace, { fileName: file, mainFile, instruction, history: convHistory }) + imageNote,
-    timeoutMs: 900_000,
-  });
+  // 워크스페이스 에이전트 실행. 오케스트레이터 모델(예: claude-fable-5)을 계정/CLI에서
+  // 못 쓰면 호출이 실패하는데, 이때 멀티에이전트(cwd 없는 임시 폴더)로 떨어지면 프로젝트
+  // 파일을 못 보게 된다. 그래서 폴백 전에 워크스페이스 모드를 유지한 채 기본 모델로 1회 재시도한다.
+  let roleUsed = role;
+  let main;
+  try {
+    main = await runWorkspaceAgent({ srcDir, snap, role, imagePaths, prompt: mainPrompt, timeoutMs: 900_000 });
+  } catch (err) {
+    if (role.backend !== 'claude' || role.model === llmConfig.DEFAULT_CLAUDE_MODEL) throw err;
+    onStep({ stage: 'agent', label: `⚠️ '${role.model}' 사용 실패 → 기본 모델(${llmConfig.DEFAULT_CLAUDE_MODEL})로 재시도…` });
+    roleUsed = { ...role, model: llmConfig.DEFAULT_CLAUDE_MODEL };
+    main = await runWorkspaceAgent({ srcDir, snap, role: roleUsed, imagePaths, prompt: mainPrompt, timeoutMs: 900_000 });
+  }
 
   let changed = diffToChangedFiles(main.diff);
 
@@ -332,7 +371,7 @@ export async function runWorkspaceEdit({ projectId, file, mainFile, instruction,
     const snapFix = await takeSnapshot(srcDir);
     try {
       await runWorkspaceAgent({
-        srcDir, snap: snapFix, role,
+        srcDir, snap: snapFix, role: roleUsed,
         prompt: fillTemplate(prompts.writeWorkspace, {
           fileName: file, mainFile, history: '(직전 편집에 대한 컴파일 오류 수정 단계)',
           instruction: `방금 편집한 뒤 LaTeX 컴파일이 실패했습니다. 아래 로그 끝부분을 보고 원인 파일·위치를 찾아 **최소 수정**으로 고치세요. 내용을 새로 쓰지 말고 컴파일이 통과하게만 만드세요.\n\n## 컴파일 로그 (끝부분)\n${logTail}`,

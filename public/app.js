@@ -882,8 +882,8 @@ window.addEventListener('resize', () => {
 });
 
 const CLAUDE_MODELS = [
-  { value: 'claude-fable-5', label: 'Fable 5 (최고 성능, 오케스트레이터 기본값)' },
-  { value: 'claude-opus-4-8', label: 'Opus 4.8 (기본값, 고성능)' },
+  { value: 'claude-fable-5', label: 'Fable 5 (최고 성능, 일부 계정만 사용 가능)' },
+  { value: 'claude-opus-4-8', label: 'Opus 4.8 (기본값, 오케스트레이터 포함)' },
   { value: 'claude-sonnet-4-6', label: 'Sonnet 4.6 (균형)' },
   { value: 'claude-haiku-4-5-20251001', label: 'Haiku 4.5 (빠름/저렴)' },
 ];
@@ -2652,6 +2652,13 @@ function setLatexFullscreen(on) {
   if (latexFullscreenBtn) {
     latexFullscreenBtn.classList.toggle('active', !!on);
     latexFullscreenBtn.textContent = on ? '⛶ 해제' : '⛶ 전체화면';
+  }
+  // 전체화면 토글은 사이드바·상단바를 숨겨 작업영역 폭이 바뀌지만 window resize 이벤트가
+  // 발생하지 않으므로, PDF:편집기 비율을 수동으로 다시 적용한다(아니면 직전 px 폭이 유지돼
+  // 비율이 깨짐 — 5:5 → 9:1 등). 레이아웃 반영 후 한 번 더 적용해 정확히 맞춘다.
+  if (pdfState.available && pdfState.open) {
+    applyPdfRatio();
+    requestAnimationFrame(() => applyPdfRatio());
   }
   if (pdfViewer && pdfState.available && pdfState.open) pdfViewer.relayout();
   if (latexEditor) setTimeout(() => latexEditor.layout(), 0);
