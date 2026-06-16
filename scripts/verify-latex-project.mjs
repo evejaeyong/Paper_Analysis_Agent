@@ -46,6 +46,25 @@ assert.ok(engine === null || typeof engine.engine === 'string', 'detectEngine sh
 
 await library.deleteProject(project.id);
 
+// ---------- 1b. 회귀: 슬래시 없는 디렉터리 엔트리 + 같은 이름 폴더 (EEXIST mkdir) ----------
+// 일부 압축 도구는 폴더를 'figures'(슬래시 없음)로 저장한다. 이게 빈 파일로 써진 뒤
+// 'figures/img.png'를 풀려고 mkdir 'figures' 하다 EEXIST로 터지던 버그의 회귀 방지.
+const proj2 = await library.createProject({ name: 'verify-dir', mainFile: 'main.tex', sourceZip: 'd.zip' });
+const zip2 = zipSync({
+  'main.tex': strToU8('\\documentclass{article}\\begin{document}x\\end{document}\n'),
+  'figures': strToU8(''),                  // 슬래시 없는 디렉터리 마커
+  'figures/diagram.png': strToU8('PNG1'),
+  'figures/photo.jpg': strToU8('JPG1'),
+  'assets/': strToU8(''),                  // 슬래시 있는 디렉터리 마커
+  'assets/logo.gif': strToU8('GIF1'),
+});
+await latexProject.extractZip(zip2, proj2.id); // 이 호출이 예전엔 EEXIST로 throw 했음
+const files2 = (await latexProject.listFiles(proj2.id)).map(f => f.path);
+assert.ok(files2.includes('figures/diagram.png') && files2.includes('figures/photo.jpg'), '같은 이름 폴더 안 이미지가 모두 들어가야 함');
+assert.ok(files2.includes('assets/logo.gif'), '슬래시 있는 디렉터리 마커도 처리되어야 함');
+assert.ok(!files2.includes('figures'), '디렉터리 마커는 파일로 남으면 안 됨');
+await library.deleteProject(proj2.id);
+
 // ---------- 2. 계약: 서버 라우트 / 프론트 UI ----------
 const server = read('server.js');
 assert.match(server, /\/api\/latex-status/, 'server must expose latex-status');
