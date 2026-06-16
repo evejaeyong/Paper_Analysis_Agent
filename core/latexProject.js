@@ -95,21 +95,29 @@ export async function extractZip(buf, projectId) {
   const srcDir = projectSrcDir(projectId);
   await ensureDir(srcDir);
 
+  // strip 적용한 최종 상대경로
+  const relOf = (safe) => {
+    if (strip && safe.startsWith(strip + '/')) return safe.slice(strip.length + 1);
+    return safe;
+  };
+  // 디렉터리로 쓰이는 경로 집합. 슬래시 없이 저장된 디렉터리 엔트리(예: `figures`)가
+  // 빈 파일로 써진 뒤 같은 이름의 폴더를 mkdir 하다 EEXIST로 터지는 것을 막는다.
+  const dirPaths = new Set();
+  for (const n of names) {
+    const parts = relOf(n).split('/');
+    for (let i = 1; i < parts.length; i++) dirPaths.add(parts.slice(0, i).join('/'));
+  }
+
   let total = 0;
   const written = [];
   for (const origName of Object.keys(entries)) {
     const safe = sanitizeEntryName(origName);
     if (!safe || safe.endsWith('/')) continue;
+    const rel = relOf(safe);
+    if (!rel || dirPaths.has(rel)) continue; // 디렉터리 마커(같은 이름이 폴더로 쓰임)는 파일로 쓰지 않음
     const data = entries[origName];
-    if (!data || !data.length) {
-      // 빈 파일도 기록(디렉터리 표시는 제외)
-    }
     total += data.length;
     if (total > MAX_TOTAL_BYTES) throw new Error('해제 후 총 용량이 한계를 초과했습니다.');
-
-    let rel = safe;
-    if (strip && rel.startsWith(strip + '/')) rel = rel.slice(strip.length + 1);
-    if (!rel) continue;
 
     const abs = path.join(srcDir, rel);
     // 최종 방어: 해석 경로가 srcDir 하위인지 확인
