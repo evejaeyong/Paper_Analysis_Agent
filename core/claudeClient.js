@@ -69,7 +69,11 @@ export async function callClaude(prompt, opts = {}) {
 ${images.map((imagePath, i) => `- image ${i + 1}: ${imagePath}`).join('\n')}`;
     }
 
-    const args = ['-p', '--output-format', 'json'];
+    // onEvent 가 주어지면 스트리밍(stream-json)으로 실행해 중간 이벤트(하위 에이전트 위임 등)를
+    // 실시간으로 흘려보낸다. 그 외에는 기존처럼 단일 json 결과를 받는다.
+    const streaming = typeof opts.onEvent === 'function';
+    const args = ['-p', '--output-format', streaming ? 'stream-json' : 'json'];
+    if (streaming) args.push('--verbose'); // -p 모드에서 stream-json 은 --verbose 필요
     if (opts.systemPrompt) {
       args.push('--system-prompt', opts.systemPrompt);
     }
@@ -112,7 +116,33 @@ ${images.map((imagePath, i) => `- image ${i + 1}: ${imagePath}`).join('\n')}`;
       proc.stderr.setEncoding('utf8');
 
       let stdout = '', stderr = '';
-      proc.stdout.on('data', d => { stdout += d; });
+      // 스트리밍: NDJSON 한 줄=한 이벤트. result 이벤트에서 최종 텍스트를 얻고, 나머지는 onEvent로 전달.
+      let streamBuf = '', streamResult = null, streamIsError = false, streamSession;
+      const handleStreamLine = (line) => {
+        const t = line.trim();
+        if (!t) return;
+        let ev; try { ev = JSON.parse(t); } catch { return; }
+        if (ev.type === 'result') {
+          if (typeof ev.result === 'string') streamResult = ev.result;
+          streamIsError = !!ev.is_error;
+          if (ev.session_id) streamSession = ev.session_id;
+        } else if (ev.type === 'system' && ev.subtype === 'init' && ev.session_id) {
+          streamSession = ev.session_id;
+        }
+        try { opts.onEvent(ev); } catch { /* onEvent 오류는 무시(라벨 표시는 best-effort) */ }
+      };
+      proc.stdout.on('data', d => {
+        if (streaming) {
+          streamBuf += d;
+          let i;
+          while ((i = streamBuf.indexOf('\n')) >= 0) {
+            handleStreamLine(streamBuf.slice(0, i));
+            streamBuf = streamBuf.slice(i + 1);
+          }
+        } else {
+          stdout += d;
+        }
+      });
       proc.stderr.on('data', d => { stderr += d; });
       proc.stdin.end(finalPrompt, 'utf8');
 
@@ -128,6 +158,18 @@ ${images.map((imagePath, i) => `- image ${i + 1}: ${imagePath}`).join('\n')}`;
 
       proc.on('close', code => {
         clearTimeout(killer);
+        if (streaming) {
+          if (streamBuf.trim()) handleStreamLine(streamBuf); // 마지막 줄
+          if (code !== 0) return reject(new Error(`claude exit ${code}: ${stderr}`));
+          if (streamResult === null) return reject(new Error('스트림 응답에서 결과(result)를 찾지 못했습니다.'));
+          if (streamIsError) return reject(new Error(`Claude 에러: ${streamResult}`));
+          if (opts.onMeta) {
+            try {
+              opts.onMeta({ backend: 'claude', model: opts.model || '', reasoningEffort: opts.reasoningEffort || '', usage: undefined, durationMs: Date.now() - startedAt, sessionIdFromResponse: streamSession });
+            } catch { /* ignore */ }
+          }
+          return resolve(streamResult);
+        }
         if (code !== 0) return reject(new Error(`claude exit ${code}: ${stderr || stdout}`));
         let json;
         try { json = JSON.parse(stdout); }

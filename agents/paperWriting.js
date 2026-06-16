@@ -268,10 +268,33 @@ async function findReferencedImagePaths(projectId, srcDir, text) {
   return [...new Set(out)].slice(0, 6);
 }
 
+// 스트리밍 이벤트 → onStep(채팅 진행 표시) 매핑. 하위 에이전트 위임/도구 사용을 실시간 표시.
+const SUBAGENT_LABEL = { writer: '✍️ 본문(writer)', figure: '📊 그림·표(figure)', citation: '📚 인용(citation)', reviewer: '🔍 검수(reviewer)' };
+function makeWorkspaceOnEvent(onStep) {
+  return (ev) => {
+    if (!ev || ev.type !== 'assistant' || !ev.message || !Array.isArray(ev.message.content)) return;
+    for (const b of ev.message.content) {
+      if (!b || b.type !== 'tool_use') continue;
+      const inp = b.input || {};
+      if (b.name === 'Agent' || b.name === 'Task') {
+        const who = inp.subagent_type || inp.agent || inp.agentType || inp.name || '하위';
+        onStep({ stage: 'subagent', label: `${SUBAGENT_LABEL[who] || ('🤖 ' + who)} 에이전트 작업 중…` });
+      } else if (b.name === 'Edit' || b.name === 'Write' || b.name === 'MultiEdit') {
+        const fp = inp.file_path || inp.path;
+        if (fp) onStep({ stage: 'edit', label: `✏️ 수정 중: ${String(fp).split(/[\\/]/).pop()}` });
+      } else if (b.name === 'WebFetch' || b.name === 'WebSearch') {
+        onStep({ stage: 'web', label: '🌐 웹 참고 중…' });
+      } else if (b.name === 'Grep' || b.name === 'Glob' || b.name === 'Read') {
+        onStep({ stage: 'explore', label: '🔎 프로젝트 살펴보는 중…' });
+      }
+    }
+  };
+}
+
 // 워크스페이스에서 에이전트 1회 실행(백엔드별). 텍스트 외 파일 변경 시 롤백 후 throw.
-// claude: Read/Grep/Glob/Edit/Write 도구로 cwd를 직접 수정(acceptEdits).
+// claude: Read/Grep/Glob/Edit/Write/Agent 도구로 cwd를 직접 수정·위임(acceptEdits). onStep 주면 스트리밍으로 진행 표시.
 // codex: cwd를 sandbox=workspace-write 로 직접 수정. 그림은 imagePaths(--image)로 첨부.
-async function runWorkspaceAgent({ srcDir, snap, role, prompt, imagePaths = [], timeoutMs }) {
+async function runWorkspaceAgent({ srcDir, snap, role, prompt, imagePaths = [], timeoutMs, onStep }) {
   let answer;
   try {
     if (role.backend === 'codex') {
@@ -290,6 +313,7 @@ async function runWorkspaceAgent({ srcDir, snap, role, prompt, imagePaths = [], 
         allowedTools: WORKSPACE_TOOLS,
         permissionMode: 'acceptEdits',
         timeoutMs,
+        onEvent: typeof onStep === 'function' ? makeWorkspaceOnEvent(onStep) : undefined,
       });
     }
   } catch (err) {
@@ -330,6 +354,11 @@ export async function runWorkspaceEdit({ projectId, file, mainFile, instruction,
     }
   }
 
+  // 프로젝트별 하위 에이전트 정의(.claude/agents/)를 현재 작성팀 프롬프트 기준으로 자동 생성·갱신.
+  // (오케스트레이터가 만드는 게 아니라 앱이 매 채팅마다 갱신 — 프롬프트가 단일 출처.)
+  // claude 백엔드에서만 의미 있음(서브에이전트는 Claude Code 기능).
+  if (role.backend === 'claude') await latexProject.writeProjectAgents(projectId, prompts).catch(() => {});
+
   onStep({ stage: 'snapshot', label: '📸 변경 추적 준비…' });
   const snap = await takeSnapshot(srcDir);
 
@@ -342,12 +371,12 @@ export async function runWorkspaceEdit({ projectId, file, mainFile, instruction,
   let roleUsed = role;
   let main;
   try {
-    main = await runWorkspaceAgent({ srcDir, snap, role, imagePaths, prompt: mainPrompt, timeoutMs: 900_000 });
+    main = await runWorkspaceAgent({ srcDir, snap, role, imagePaths, prompt: mainPrompt, timeoutMs: 900_000, onStep });
   } catch (err) {
     if (role.backend !== 'claude' || role.model === llmConfig.DEFAULT_CLAUDE_MODEL) throw err;
     onStep({ stage: 'agent', label: `⚠️ '${role.model}' 사용 실패 → 기본 모델(${llmConfig.DEFAULT_CLAUDE_MODEL})로 재시도…` });
     roleUsed = { ...role, model: llmConfig.DEFAULT_CLAUDE_MODEL };
-    main = await runWorkspaceAgent({ srcDir, snap, role: roleUsed, imagePaths, prompt: mainPrompt, timeoutMs: 900_000 });
+    main = await runWorkspaceAgent({ srcDir, snap, role: roleUsed, imagePaths, prompt: mainPrompt, timeoutMs: 900_000, onStep });
   }
 
   let changed = diffToChangedFiles(main.diff);
@@ -371,7 +400,7 @@ export async function runWorkspaceEdit({ projectId, file, mainFile, instruction,
     const snapFix = await takeSnapshot(srcDir);
     try {
       await runWorkspaceAgent({
-        srcDir, snap: snapFix, role: roleUsed,
+        srcDir, snap: snapFix, role: roleUsed, onStep,
         prompt: fillTemplate(prompts.writeWorkspace, {
           fileName: file, mainFile, history: '(직전 편집에 대한 컴파일 오류 수정 단계)',
           instruction: `방금 편집한 뒤 LaTeX 컴파일이 실패했습니다. 아래 로그 끝부분을 보고 원인 파일·위치를 찾아 **최소 수정**으로 고치세요. 내용을 새로 쓰지 말고 컴파일이 통과하게만 만드세요.\n\n## 컴파일 로그 (끝부분)\n${logTail}`,

@@ -17,7 +17,10 @@ async function walkFiles(rootDir) {
     catch { return; }
     for (const e of entries) {
       const rel = relDir ? `${relDir}/${e.name}` : e.name;
-      if (e.isDirectory()) { await walk(path.join(absDir, e.name), rel); continue; }
+      if (e.isDirectory()) {
+        if (e.name === '.claude') continue; // 하위 에이전트 정의 등 도구 설정 — 추적·롤백 대상 아님
+        await walk(path.join(absDir, e.name), rel); continue;
+      }
       if (isArtifactPath(rel)) continue;
       try {
         const st = await fs.stat(path.join(absDir, e.name));
