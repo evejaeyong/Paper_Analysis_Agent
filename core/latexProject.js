@@ -310,24 +310,38 @@ export async function writeProjectFile(projectId, relPath, content) {
   await fs.writeFile(abs, String(content ?? ''), 'utf8');
 }
 
-// 작성팀 하위 에이전트(프로젝트별 src/.claude/agents/). 기존 작성팀 프롬프트(writeBody 등)에서
-// "전체 파일 반환" 같은 STORM 입출력 배관을 떼어내고, Edit로 부분 수정하는 워크스페이스 헤더를 붙여
-// 생성한다. 프롬프트가 단일 출처이므로 **채팅마다 자동 갱신**(덮어씀)한다.
+// 작성팀 하위 에이전트(프로젝트별 src/.claude/agents/). 기존 작성팀 프롬프트 전체를 그대로
+// 가져와(STORM 입출력 배관 줄만 제거), 워크스페이스 헤더를 붙여 생성한다. 프롬프트가 단일
+// 출처이므로 **채팅마다 자동 갱신**(덮어씀). 작성팀 구조를 그대로 서브에이전트로 재현한다.
+// mode: edit(파일 수정) | read(읽기/분석/계획만) | web(읽기+웹 도구)
 const AGENTS_FROM_PROMPT = [
-  { file: 'writer.md', name: 'writer', key: 'writeBody', desc: '본문 텍스트 작성·수정·요약·번역·재구성(문단/섹션 단위).' },
-  { file: 'figure.md', name: 'figure', key: 'writeFigure', desc: 'tikz/pgfplots 그림과 표(table) 생성·수정. 표 작업은 반드시 이 에이전트.' },
-  { file: 'citation.md', name: 'citation', key: 'writeCitation', desc: '빈 \\cite{} 를 기존 .bib 키로 채움·인용 정리(새 키 생성 금지).' },
-  { file: 'reviewer.md', name: 'reviewer', key: 'writeReview', desc: '작성/수정 후 흐름·문법·일관성·작성 rule 점검(문제 부분만 최소 수정).' },
+  { file: 'planner.md', name: 'planner', key: 'writePlan', mode: 'read', desc: '작성 전 무엇을 어디에 어떻게 할지 구체적 작업 계획 수립(LaTeX 코드 작성 X).' },
+  { file: 'writer.md', name: 'writer', key: 'writeBody', mode: 'edit', desc: '본문 텍스트 작성·수정·요약·번역·재구성(문단/섹션 단위).' },
+  { file: 'figure.md', name: 'figure', key: 'writeFigure', mode: 'edit', desc: 'tikz/pgfplots 그림과 표(table) 생성·수정. 표 작업은 반드시 이 에이전트.' },
+  { file: 'citation.md', name: 'citation', key: 'writeCitation', mode: 'edit', desc: '빈 \\cite{} 를 기존 .bib 키로 채움·인용 정리(새 키 생성 금지).' },
+  { file: 'reviewer.md', name: 'reviewer', key: 'writeReview', mode: 'edit', desc: '작성/수정 후 흐름·문법·일관성·작성 rule 점검(문제 부분만 최소 수정).' },
+  { file: 'compile.md', name: 'compile', key: 'writeCompile', mode: 'edit', desc: '컴파일 오류를 로그 보고 근본 원인만 최소 수정.' },
+  { file: 'research.md', name: 'research', key: 'research', mode: 'web', desc: 'URL 읽기·웹 검색으로 외부 자료·관련연구 조사(파일 수정 X).' },
+  { file: 'evidence.md', name: 'evidence', key: 'evidence', mode: 'read', desc: '문서 안에 특정 주장·내용이 있는지 근거(원문 발췌·위치)와 함께 찾기(파일 수정 X).' },
+  { file: 'chat.md', name: 'chat', key: 'writeChat', mode: 'read', desc: '전문 작업이 아닌 일반 질문·조언·md/요약 작성(파일 수정 X).' },
 ];
 
-const AGENT_HEADER = '[워크스페이스 하위 에이전트] 당신은 프로젝트 폴더에서 **Edit 도구로 파일을 직접 수정**합니다. 전체 파일을 반환하거나 코드블록으로 출력하지 말고, **바뀌는 부분만 Edit로 최소 수정**하세요. 요청하지 않은 부분·기존 내용을 통째로 지우지 마세요. 작업 후 무엇을 왜 바꿨는지 1~3문장으로 보고합니다.\n\n--- 아래는 당신의 전문 작성 규칙입니다 ---';
+const EDIT_HEADER = '[워크스페이스 하위 에이전트] 프로젝트 폴더에서 Edit 도구로 파일을 직접 수정합니다. 전체 파일을 반환하거나 코드블록으로 출력하지 말고, 바뀌는 부분만 Edit로 최소 수정하세요. 요청하지 않은 부분·기존 내용을 통째로 지우지 마세요. 작업 후 무엇을 왜 바꿨는지 1~3문장으로 보고합니다.';
+const READ_HEADER = '[워크스페이스 하위 에이전트] 프로젝트 폴더의 파일을 Read/Grep/Glob(필요시 웹 도구)으로 직접 읽고 분석·조사·계획만 합니다. **파일은 수정하지 않습니다.** 결과를 오케스트레이터에게 한국어로 보고합니다.';
+const AGENT_TOOLS = { edit: 'Read, Grep, Glob, Edit', read: 'Read, Grep, Glob', web: 'Read, Grep, Glob, WebFetch, WebSearch' };
 
-// 기존 프롬프트 → 서브에이전트 본문: 치환변수({{...}})가 든 섹션과 "전체 파일 반환/코드블록" 류 줄 제거.
+// 기존 프롬프트 → 서브에이전트 본문: 치환변수({{...}})가 든 섹션·헤딩만 있는 빈 섹션 제거,
+// "전체 파일 반환/코드블록" 등 STORM 전용(워크스페이스에 안 맞는) 줄만 제거하고 나머지는 그대로.
 export function promptToAgentBody(text) {
   const sections = String(text || '').split(/\n(?=##\s)/);
-  const kept = sections.filter(s => !/\{\{/.test(s)); // 입력 치환 섹션(파일/계획/이전대화/지시) 제거
+  const kept = sections.filter(s => {
+    if (/\{\{/.test(s)) return false; // 입력 치환 섹션 제거
+    const lines = s.split('\n');
+    if (/^##\s/.test(lines[0]) && lines.slice(1).join('').trim() === '') return false; // 헤딩만 있는 빈 섹션 제거
+    return true;
+  });
   const body = kept.join('\n').split('\n')
-    .filter(l => !/(전체 파일|코드블록|일부만 반환|self-reflection|반환합니다)/.test(l))
+    .filter(l => !/(전체 파일|파일 전체|코드블록|일부만 반환|스니펫|직접 읽을 수 없|파일 시스템에 대한 추측)/.test(l))
     .join('\n');
   return body.replace(/\n{3,}/g, '\n\n').trim();
 }
@@ -340,7 +354,9 @@ export async function writeProjectAgents(projectId, prompts) {
   for (const a of AGENTS_FROM_PROMPT) {
     const src = prompts && prompts[a.key];
     if (!src) continue;
-    const md = `---\nname: ${a.name}\ndescription: ${a.desc}\ntools: Read, Grep, Glob, Edit\n---\n${AGENT_HEADER}\n\n${promptToAgentBody(src)}\n`;
+    const header = a.mode === 'edit' ? EDIT_HEADER : READ_HEADER;
+    const tools = AGENT_TOOLS[a.mode] || AGENT_TOOLS.read;
+    const md = `---\nname: ${a.name}\ndescription: ${a.desc}\ntools: ${tools}\n---\n${header}\n\n--- 아래는 당신의 전문 규칙입니다 ---\n\n${promptToAgentBody(src)}\n`;
     await fs.writeFile(path.join(dir, a.file), md, 'utf8'); // 단일 출처(프롬프트) → 매번 갱신
   }
   return dir;
