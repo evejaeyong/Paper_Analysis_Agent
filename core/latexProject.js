@@ -20,7 +20,7 @@ const ARTIFACT_EXT = new Set([
 const IMAGE_EXT = new Set(['.png', '.jpg', '.jpeg', '.gif', '.webp', '.bmp', '.svg']);
 // 그림으로 쓰이지만 <img>로 미리보기 안 되는 형식(트리에는 보여줌)
 const GRAPHIC_OTHER_EXT = new Set(['.eps', '.ps', '.tif', '.tiff']);
-const MAX_ASSET_BYTES = 20 * 1024 * 1024; // 업로드 1파일 상한
+const MAX_ASSET_BYTES = 50 * 1024 * 1024; // 업로드 1파일 상한(전송 한도와 동일)
 
 export function isEditablePath(rel) {
   return EDITABLE_EXT.has(path.extname(rel).toLowerCase());
@@ -34,9 +34,10 @@ export function isPdfPath(rel) {
   return path.extname(rel).toLowerCase() === '.pdf';
 }
 
-// 업로드(드래그/선택)로 추가 가능한 자산 — 현재는 이미지
+// 업로드(드래그/선택)로 추가 가능한 자산 — 모든 파일 형식 허용(pdf 등 포함).
+// 경로 안전성은 resolveInSrc, 크기는 MAX_ASSET_BYTES가 담당한다.
 export function isUploadableAsset(rel) {
-  return IMAGE_EXT.has(path.extname(rel).toLowerCase());
+  return !!rel && !String(rel).endsWith('/');
 }
 
 // 파일 종류: 'text'(편집) | 'image'(래스터 미리보기) | 'pdf'(미리보기) | 'other'(목록만)
@@ -288,11 +289,11 @@ export async function deleteProjectPath(projectId, relPath) {
   return String(relPath).replace(/\\/g, '/');
 }
 
-// 업로드된 자산(이미지) 저장. 편집 불가 형식이지만 프로젝트에 추가 가능.
+// 업로드된 자산 저장. 모든 파일 형식 허용(이미지·pdf 등). 편집 불가 형식도 프로젝트에 추가 가능.
 export async function writeProjectAsset(projectId, relPath, buffer) {
-  if (!isUploadableAsset(relPath)) throw new Error('업로드할 수 없는 파일 형식입니다 (이미지만 가능).');
+  if (!isUploadableAsset(relPath)) throw new Error('파일 이름이 올바르지 않습니다.');
   const buf = Buffer.isBuffer(buffer) ? buffer : Buffer.from(buffer);
-  if (buf.length > MAX_ASSET_BYTES) throw new Error('파일이 너무 큽니다 (최대 20MB).');
+  if (buf.length > MAX_ASSET_BYTES) throw new Error('파일이 너무 큽니다 (최대 50MB).');
   const abs = resolveInSrc(projectId, relPath);
   await ensureDir(path.dirname(abs));
   await fs.writeFile(abs, buf);

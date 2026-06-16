@@ -210,6 +210,14 @@ function diffToChangedFiles(diff) {
   ];
 }
 
+// diff에서 텍스트 소스(편집 가능 확장자)만 남긴다. 워크스페이스 편집은 텍스트 소스만
+// 관심사이므로, 채팅 도중 사용자가 올린 자산(이미지·pdf 등)은 추적·롤백 대상에서 제외해
+// 채팅과 파일 업로드가 서로 독립적으로 동작하게 한다.
+function textOnlyDiff(diff) {
+  const keep = (arr) => arr.filter(p => latexProject.isEditablePath(p));
+  return { modified: keep(diff.modified), added: keep(diff.added), deleted: keep(diff.deleted) };
+}
+
 // 지시·대화에서 언급된 그림 파일을 프로젝트 안에서 찾아 절대경로로 반환.
 // codex는 파일을 셸로 읽으면 이미지가 바이너리라 '보이지' 않으므로, 여기서 찾은
 // 그림을 --image 로 첨부해 모델이 실제로 그림을 보게 한다. (claude는 Read로 직접 봄)
@@ -256,18 +264,14 @@ async function runWorkspaceAgent({ srcDir, snap, role, prompt, imagePaths = [], 
       });
     }
   } catch (err) {
-    // 타임아웃·CLI 실패 등으로 부분 수정이 남을 수 있음 → 스냅샷으로 전체 복원
+    // 타임아웃·CLI 실패 등으로 부분 수정이 남을 수 있음 → 텍스트 편집만 복원.
+    // 동시에 사용자가 올린 자산(이미지·pdf 등)은 건드리지 않는다(채팅·업로드 독립).
     const d = await diffSnapshot(snap).catch(() => null);
-    if (d) await restoreSnapshot(snap, d).catch(() => {});
+    if (d) await restoreSnapshot(snap, textOnlyDiff(d)).catch(() => {});
     throw err;
   }
-  const diff = await diffSnapshot(snap);
-  const violations = [...diff.modified, ...diff.added, ...diff.deleted]
-    .filter(p => !latexProject.isEditablePath(p));
-  if (violations.length) {
-    await restoreSnapshot(snap, diff).catch(() => {});
-    throw new Error(`에이전트가 텍스트 소스가 아닌 파일을 변경하려 해 모두 되돌렸습니다: ${violations.join(', ')}`);
-  }
+  // 텍스트 소스 변경만 워크스페이스 편집의 결과로 본다(동시 업로드된 자산은 무시).
+  const diff = textOnlyDiff(await diffSnapshot(snap));
   return { answer: (answer || '').trim(), diff };
 }
 
@@ -339,8 +343,8 @@ export async function runWorkspaceEdit({ projectId, file, mainFile, instruction,
     compile = await compileProject(projectId, mainFile, { timeoutMs: 180_000 });
   }
 
-  // 수정 루프 반영해 최종 변경 목록 재계산
-  changed = diffToChangedFiles(await diffSnapshot(snap));
+  // 수정 루프 반영해 최종 변경 목록 재계산(텍스트 소스만)
+  changed = diffToChangedFiles(textOnlyDiff(await diffSnapshot(snap)));
 
   let note = `🛠️ ${main.answer || '수정 완료'}`;
   note += `\n\n변경된 파일: ${changed.map(c => `${c.path}${c.status === 'added' ? ' (새 파일)' : ''}`).join(', ') || '(없음)'}`;
