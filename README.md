@@ -1,4 +1,4 @@
-# Korean Paper Agent Console (KPAC) · v0.6.3
+# Korean Paper Agent Console (KPAC) · v0.6.4
 
 영어 논문을 **읽고 분석**하는 것에서 끝나지 않고, LaTeX 논문을 **직접 쓰고 컴파일**하는 데까지 돕는 데스크탑 앱입니다. 두 개의 작업 모드로 구성됩니다.
 
@@ -186,8 +186,7 @@ URL을 주거나 외부 자료가 필요한 요청에서, **`WebFetch`/`WebSearc
 
 1. **백엔드 CLI 로그인** — `claude` 또는 `codex` 둘 중 하나(또는 둘 다) 설치하고 한 번 로그인.
 2. [**Releases**](https://github.com/evejaeyong/Paper_Analysis_Agent/releases/latest) 페이지에서 본인 OS / 아키텍처에 맞는 파일 다운로드:
-   - **`PAA-x.y.z-setup.exe`** (Windows) — 설치형. 시작 메뉴 / 바탕화면 단축키 생성. **새 버전이 나오면 앱이 알려주고, 선택하면 자동 업데이트**됩니다(설치형 한정 · 포터블/ macOS는 수동 다운로드).
-   - **`PAA-x.y.z.exe`** (Windows) — 포터블. 더블클릭만으로 실행(설치 X, 임시 폴더에 자동 압축 해제).
+   - **`PAA-x.y.z-setup.exe`** (Windows) — 설치형. 시작 메뉴 / 바탕화면 단축키 생성. **새 버전이 나오면 앱이 알려주고, 선택하면 자동 업데이트**됩니다(macOS는 수동 다운로드).
    - **`PAA-x.y.z-arm64.dmg`** (macOS Apple Silicon — M1/M2/M3/M4)
    - **`PAA-x.y.z-x64.dmg`** (macOS Intel)
 3. 실행하면 콘솔형 UI 가 뜹니다. CLI 가 없거나 미로그인이면 안내 화면이 뜨니, 거기 링크 따라 설치/로그인 후 **다시 시도** 클릭.
