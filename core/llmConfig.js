@@ -16,8 +16,10 @@ export const DEFAULT_CODEX_REASONING_EFFORT = 'high';
 
 export const CLAUDE_MODELS = Object.freeze(['claude-fable-5', 'claude-opus-4-8', 'claude-sonnet-4-6', 'claude-haiku-4-5-20251001']);
 export const DEFAULT_CLAUDE_MODEL = 'claude-opus-4-8';
-// 오케스트레이터 역할(분석팀·작성팀)은 최상위 모델인 Fable 5가 기본값.
-export const ORCHESTRATOR_CLAUDE_MODEL = 'claude-fable-5';
+// 오케스트레이터 역할(분석팀·작성팀) 기본 모델. Fable 5는 일부 계정/CLI에서 사용 불가라
+// 워크스페이스 편집이 실패·폴백하는 문제가 있어, 보편적으로 쓸 수 있는 Opus 4.8을 기본값으로 둔다.
+// (Fable 5를 쓰려면 설정에서 직접 선택)
+export const ORCHESTRATOR_CLAUDE_MODEL = 'claude-opus-4-8';
 const ORCHESTRATOR_ROLES = new Set(['orchestrator', 'writeOrchestrator']);
 // Claude Code `--effort` 등급은 모델마다 다르다. Haiku는 effort 미지원(빈 배열).
 export const CLAUDE_EFFORTS_BY_MODEL = Object.freeze({
