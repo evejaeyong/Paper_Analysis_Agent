@@ -4,7 +4,7 @@
 //   - binary 없음        → /setup?reason=missing  (CLI 설치 안내)
 //   - binary 있고 미로그인 → /setup?reason=login   (로그인 안내 + 자동 폴링)
 //   - 둘 다 OK           → / (메인 채팅 UI)
-import { app, BrowserWindow, shell } from 'electron';
+import { app, BrowserWindow, shell, dialog } from 'electron';
 import fixPath from 'fix-path';
 import { startServer } from './server.js';
 
@@ -75,6 +75,49 @@ async function createWindow() {
   } catch (err) {
     await mainWindow.loadURL(startupErrorPage(err?.stack || err?.message || String(err)));
   }
+
+  setupAutoUpdate(); // 새 버전 있으면 알림 → 사용자가 선택해 업데이트(자동 다운로드 안 함)
+}
+
+// 자동 업데이트(설치형 Windows 전용). 새 릴리즈가 있으면 알림만 띄우고, 사용자가
+// "지금 업데이트"를 누르면 다운로드 → 다운로드 후 "재시작해 설치" 여부를 다시 선택.
+let updateChecked = false;
+async function setupAutoUpdate() {
+  if (updateChecked) return;
+  updateChecked = true;
+  if (!app.isPackaged) return;                      // 개발 모드(npm start) 스킵
+  if (process.platform !== 'win32') return;         // 현재 업데이트 메타는 Windows만 게시(mac 미서명)
+  if (process.env.PORTABLE_EXECUTABLE_DIR) return;  // 포터블 exe는 자가 설치 불가 → 스킵(설치형만)
+  let autoUpdater;
+  try { ({ autoUpdater } = await import('electron-updater')); }
+  catch { return; }                                 // 의존성 없으면 조용히 스킵
+  autoUpdater.autoDownload = false;                 // 사용자가 선택해야 다운로드
+  autoUpdater.autoInstallOnAppQuit = true;          // "나중에" 시 종료할 때 설치
+
+  autoUpdater.on('update-available', async (info) => {
+    if (!mainWindow) return;
+    const { response } = await dialog.showMessageBox(mainWindow, {
+      type: 'info', buttons: ['지금 업데이트', '나중에'], defaultId: 0, cancelId: 1,
+      title: '업데이트 있음',
+      message: `새 버전 v${info.version} 이(가) 있습니다.`,
+      detail: '지금 다운로드해 업데이트할까요? 다운로드가 끝나면 재시작 시 적용됩니다.',
+    });
+    if (response === 0) autoUpdater.downloadUpdate().catch(err => console.warn('업데이트 다운로드 실패:', err?.message || err));
+  });
+  autoUpdater.on('update-downloaded', async (info) => {
+    if (!mainWindow) return;
+    const { response } = await dialog.showMessageBox(mainWindow, {
+      type: 'info', buttons: ['지금 재시작해 설치', '나중에'], defaultId: 0, cancelId: 1,
+      title: '업데이트 준비 완료',
+      message: `v${info.version} 다운로드 완료.`,
+      detail: '지금 재시작해 설치할까요? "나중에"를 누르면 앱을 종료할 때 자동 설치됩니다.',
+    });
+    if (response === 0) autoUpdater.quitAndInstall();
+  });
+  autoUpdater.on('error', (err) => console.warn('autoUpdater 오류:', err?.message || err));
+
+  try { await autoUpdater.checkForUpdates(); }
+  catch (err) { console.warn('업데이트 확인 실패:', err?.message || err); }
 }
 
 const gotLock = app.requestSingleInstanceLock();
