@@ -6,6 +6,8 @@
 //   - 둘 다 OK           → / (메인 채팅 UI)
 import { app, BrowserWindow, shell, dialog } from 'electron';
 import fixPath from 'fix-path';
+import path from 'node:path';
+import { appendFileSync } from 'node:fs';
 import { startServer } from './server.js';
 
 // macOS/Linux 에서 Finder/Dock 으로 실행한 .app 은 로그인 셸의 PATH 를 상속받지 못해
@@ -81,6 +83,17 @@ async function createWindow() {
 
 // 자동 업데이트(설치형 Windows 전용). 새 릴리즈가 있으면 알림만 띄우고, 사용자가
 // "지금 업데이트"를 누르면 다운로드 → 다운로드 후 "재시작해 설치" 여부를 다시 선택.
+// 업데이트 진단 로그 → userData/update.log (깜깜이 실패 방지)
+function makeUpdateLogger() {
+  let file;
+  try { file = path.join(app.getPath('userData'), 'update.log'); } catch { file = null; }
+  const write = (lvl, args) => {
+    if (!file) return;
+    try { appendFileSync(file, `[${new Date().toISOString()}] ${lvl} ${args.map(a => (a && a.stack) || String(a)).join(' ')}\n`); } catch { /* ignore */ }
+  };
+  return { info: (...a) => write('INFO', a), warn: (...a) => write('WARN', a), error: (...a) => write('ERROR', a), debug: (...a) => write('DEBUG', a) };
+}
+
 let updateChecked = false;
 async function setupAutoUpdate() {
   if (updateChecked) return;
@@ -88,9 +101,15 @@ async function setupAutoUpdate() {
   if (!app.isPackaged) return;                      // 개발 모드(npm start) 스킵
   if (process.platform !== 'win32') return;         // 현재 업데이트 메타는 Windows만 게시(mac 미서명)
   if (process.env.PORTABLE_EXECUTABLE_DIR) return;  // 포터블 exe는 자가 설치 불가 → 스킵(설치형만)
+  // electron-updater는 CommonJS + autoUpdater를 getter로 노출 → ESM 명명 import로는 undefined가 된다.
+  // 반드시 default(module.exports)에서 .autoUpdater 를 읽어야 NsisUpdater 인스턴스를 얻는다.
   let autoUpdater;
-  try { ({ autoUpdater } = await import('electron-updater')); }
-  catch { return; }                                 // 의존성 없으면 조용히 스킵
+  try {
+    const mod = await import('electron-updater');
+    autoUpdater = (mod.default && mod.default.autoUpdater) || mod.autoUpdater;
+  } catch (err) { console.warn('electron-updater 로드 실패:', err?.message); return; }
+  if (!autoUpdater || typeof autoUpdater.checkForUpdates !== 'function') { console.warn('autoUpdater 사용 불가'); return; }
+  autoUpdater.logger = makeUpdateLogger();          // 확인/다운로드/오류를 update.log 에 기록
   autoUpdater.autoDownload = false;                 // 사용자가 선택해야 다운로드
   autoUpdater.autoInstallOnAppQuit = true;          // "나중에" 시 종료할 때 설치
 
