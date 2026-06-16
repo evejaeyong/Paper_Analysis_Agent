@@ -1919,8 +1919,10 @@ function openLatexCtxMenu(x, y, target) {
   } else if (target.type === 'dir') {
     addItem('📄 여기에 새 파일', 'newfile');
     addItem('📁 여기에 새 폴더', 'newfolder');
+    addItem('✏️ 이름 변경', 'rename');
     addItem('🗑 삭제', 'delete');
   } else {
+    addItem('✏️ 이름 변경', 'rename');
     addItem('🗑 삭제', 'delete');
   }
   latexCtxMenu.hidden = false;
@@ -1979,12 +1981,9 @@ async function createLatexEntryApi(kind, rel) {
   }
 }
 
-// 드래그&드롭으로 파일/폴더를 destDir(폴더 경로, '' = 루트)로 이동
-async function moveLatexPath(from, destDir) {
-  if (!from || !state.currentProjectId) return;
-  const name = from.split('/').pop();
-  const to = destDir ? `${destDir}/${name}` : name;
-  if (to === from) return; // 같은 위치
+// 파일/폴더 경로 변경(이동·이름 변경 공용). 모든 형식 지원 — 서버 /move 가 경로 안전성 처리.
+async function applyLatexMove(from, to, label = '이동') {
+  if (!from || !to || to === from || !state.currentProjectId) return;
   try {
     const res = await fetch(`/api/library/projects/${state.currentProjectId}/move`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ from, to }),
@@ -1993,15 +1992,56 @@ async function moveLatexPath(from, destDir) {
     if (!res.ok) throw new Error(j.error || `HTTP ${res.status}`);
     state.latexFiles = j.files || state.latexFiles;
     if (j.mainFile) state.latexMainFile = j.mainFile;
-    // 열린 파일/미리보기 경로 갱신
+    // 열린 파일/미리보기 경로 갱신(해당 경로와 그 하위 모두)
     const remap = (p) => (p === from ? to : (p && p.startsWith(from + '/') ? to + p.slice(from.length) : p));
     state.currentLatexFile = remap(state.currentLatexFile);
     state.latexPreview = remap(state.latexPreview);
     renderLatexFileTree();
-    showToast(`이동: ${from} → ${to}`);
+    showToast(`${label}: ${from} → ${to}`);
   } catch (err) {
-    showToast('이동 실패: ' + err.message);
+    showToast(`${label} 실패: ` + err.message);
   }
+}
+
+// 드래그&드롭으로 파일/폴더를 destDir(폴더 경로, '' = 루트)로 이동
+async function moveLatexPath(from, destDir) {
+  if (!from) return;
+  const name = from.split('/').pop();
+  const to = destDir ? `${destDir}/${name}` : name;
+  await applyLatexMove(from, to, '이동');
+}
+
+// 우클릭 → 이름 변경: 같은 폴더에서 이름만 바꾼다(모든 파일·폴더 지원).
+// Electron 렌더러는 window.prompt 가 막혀 있어 트리에 인라인 입력칸을 띄운다.
+function startRenameLatexEntry(fromPath) {
+  if (!state.currentProjectId || !latexFileTree || !fromPath) return;
+  latexFileTree.querySelector('.latex-newfile')?.remove();
+  const parent = fromPath.includes('/') ? fromPath.slice(0, fromPath.lastIndexOf('/')) : '';
+  const curName = fromPath.split('/').pop();
+  const row = document.createElement('div');
+  row.className = 'latex-newfile';
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.value = curName;
+  row.appendChild(input);
+  latexFileTree.prepend(row);
+  input.focus();
+  input.select();
+  let done = false;
+  const finish = async (commit) => {
+    if (done) return; done = true;
+    const name = input.value.trim();
+    row.remove();
+    if (!commit || !name || name === curName) return;
+    if (name.includes('/') || name.includes('\\')) { showToast('이름에 경로 구분자(/ \\)는 쓸 수 없어요'); return; }
+    const to = parent ? `${parent}/${name}` : name;
+    await applyLatexMove(fromPath, to, '이름 변경');
+  };
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); finish(true); }
+    else if (e.key === 'Escape') { e.preventDefault(); finish(false); }
+  });
+  input.addEventListener('blur', () => finish(true));
 }
 
 async function deleteLatexPath(target) {
@@ -2053,10 +2093,10 @@ function isImageFile(f) {
   return /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(f.name || '');
 }
 
-// 이미지 파일을 현재 프로젝트에 업로드(드래그/선택) → 트리 갱신 후 미리보기
+// 파일을 현재 프로젝트에 업로드(드래그/선택). 모든 형식 허용(이미지·pdf 등).
+// 채팅과 독립적으로 동작 — 채팅 중에 올려도 끊기지 않는다.
 async function uploadProjectAsset(file) {
   if (!state.currentProjectId) { showToast('먼저 LaTeX 프로젝트를 여세요'); return; }
-  if (!isImageFile(file)) { showToast('이미지 파일만 추가할 수 있어요'); return; }
   try {
     const res = await fetch(`/api/library/projects/${state.currentProjectId}/upload`, {
       method: 'POST', headers: { 'X-Filename': encodeURIComponent(file.name) }, body: file,
@@ -2065,7 +2105,7 @@ async function uploadProjectAsset(file) {
     if (!res.ok) throw new Error(j.error || `HTTP ${res.status}`);
     state.latexFiles = j.files || state.latexFiles;
     renderLatexFileTree();
-    if (j.path) showLatexImage(j.path);
+    if (j.path && isImageFile(file)) showLatexImage(j.path); // 이미지면 미리보기(그 외엔 트리에만 추가)
     showToast(`추가됨: ${j.path}`);
   } catch (err) {
     showToast('추가 실패: ' + err.message);
@@ -2635,7 +2675,7 @@ window.addEventListener('dragenter', (e) => {
   dragDepth++;
   if (dropOverlayCard) {
     dropOverlayCard.textContent = state.mode === 'latex'
-      ? '이미지를 놓으면 프로젝트에 추가됩니다 (ZIP은 새 프로젝트)'
+      ? '파일을 놓으면 프로젝트에 추가됩니다 (ZIP은 새 프로젝트)'
       : 'PDF를 여기에 놓으세요';
   }
   dropOverlay.hidden = false;
@@ -2659,13 +2699,11 @@ window.addEventListener('drop', (e) => {
   dropOverlay.hidden = true;
   const files = Array.from(e.dataTransfer?.files || []);
   if (!files.length) return;
-  // LaTeX 모드: 이미지는 현재 프로젝트에 추가, ZIP은 새 프로젝트
+  // LaTeX 모드: ZIP은 새 프로젝트, 그 외 모든 파일은 현재 프로젝트에 추가
   if (state.mode === 'latex' && state.currentProjectId) {
-    const imgs = files.filter(isImageFile);
-    if (imgs.length) { (async () => { for (const img of imgs) await uploadProjectAsset(img); })(); return; }
     const zip = files.find(isZip);
     if (zip) { uploadLatexZip(zip); return; }
-    showToast('이미지 파일 또는 ZIP만 추가할 수 있어요');
+    (async () => { for (const f of files) await uploadProjectAsset(f); })();
     return;
   }
   const f = files[0];
@@ -2726,6 +2764,7 @@ if (latexCtxMenu) latexCtxMenu.addEventListener('click', (e) => {
   if (act === 'delete') deleteLatexPath(target);
   else if (act === 'newfile') startNewLatexEntry(dir, 'file');
   else if (act === 'newfolder') startNewLatexEntry(dir, 'folder');
+  else if (act === 'rename' && target && target.path) startRenameLatexEntry(target.path);
 });
 
 // 파일 트리 드래그&드롭 이동 (위임 — 컨테이너는 재렌더돼도 유지)
