@@ -981,7 +981,11 @@ export function createPdfViewer(container) {
 
   // ---- 공개 API ----
 
-  async function load(source) {
+  async function load(source, opts = {}) {
+    // 재컴파일 등으로 같은 문서를 다시 로드할 때 스크롤 위치 유지(맨 위로 튀지 않게).
+    const keepScroll = !!opts.preserveScroll;
+    const beforeTop = keepScroll ? container.scrollTop : 0;
+    const beforeH = keepScroll ? container.scrollHeight : 0;
     await destroy();
     selectionMode = false;
     manualZoom = false;   // 새 문서는 항상 폭 맞춤으로 시작
@@ -1008,6 +1012,10 @@ export function createPdfViewer(container) {
     if (token !== loadToken) return;
     buildIndex();
     if (zoomChangeHandler) zoomChangeHandler(currentScale);
+    // 스크롤 위치 복원(높이가 바뀌었을 수 있어 비율 기준). 컴파일 전 보던 위치를 유지.
+    if (keepScroll && beforeH > 0) {
+      container.scrollTop = (beforeTop / beforeH) * (container.scrollHeight || beforeH);
+    }
   }
 
   function onZoomChange(callback) {

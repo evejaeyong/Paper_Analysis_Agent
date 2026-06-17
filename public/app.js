@@ -428,7 +428,7 @@ const state = {
   latexDirty: false,
   latexBusy: false,
   latexEngine: null,
-  latexChatBusy: false,
+  busyProjects: new Set(), // 채팅 처리 중인 프로젝트 id 집합(프로젝트별 독립 운용)
 };
 
 let authStatus = null;
@@ -1683,6 +1683,7 @@ async function ensureLatexEditor() {
       latexEditor = ed;
       ed.onChange(() => { state.latexDirty = true; updateLatexSaveState(); scheduleLatexAutosave(); });
       ed.onSave(() => { saveCurrentLatexFile(); });
+      ed.onCompile(() => { compileLatex(); }); // Ctrl+S → 저장 후 컴파일
       return ed;
     });
   }
@@ -1740,6 +1741,7 @@ async function openLatexProject(id) {
     closeLatexDiff();
     showLatexEditorPane();
     restoreLatexChat(id); // 서버에서 비동기 복원(렌더는 완료 시)
+    updateLatexChatSendState(); // 이 프로젝트가 처리 중이면 전송 버튼 비활성
     if (latexTitle) { latexTitle.textContent = project.name || 'LaTeX 프로젝트'; latexTitle.title = project.name || ''; }
     renderLatexFileTree();
     try {
@@ -1882,13 +1884,8 @@ function renderPartialDiff(host, blocks) {
   let ci = 0;
   for (const blk of blocks) {
     if (blk.type === 'equal') {
-      const lines = blk.lines;
-      const show = (arr, cls) => arr.forEach(t => { const d = document.createElement('div'); d.className = 'diff-line ctx'; d.textContent = '  ' + t; wrap.appendChild(d); });
-      if (lines.length > 6) {
-        show(lines.slice(0, 3));
-        const more = document.createElement('div'); more.className = 'diff-line fold'; more.textContent = `  ⋯ ${lines.length - 6}줄 생략 ⋯`; wrap.appendChild(more);
-        show(lines.slice(-3));
-      } else show(lines);
+      // 변경되지 않은 줄도 전부 표시(수정/미수정 부분을 한 화면에서 맥락과 함께 보게)
+      for (const t of blk.lines) { const d = document.createElement('div'); d.className = 'diff-line ctx'; d.textContent = '  ' + t; wrap.appendChild(d); }
       continue;
     }
     const idx = ci++;
@@ -2237,7 +2234,7 @@ async function compileLatex() {
     const j = await res.json().catch(() => ({}));
     showLatexLog(j.log || j.error || '(로그 없음)');
     if (j.hasPdf) {
-      showProjectPdf(state.currentProjectId, true);
+      showProjectPdf(state.currentProjectId, true, true); // 재컴파일 — PDF 스크롤 위치 유지
       setLatexCompileStatus(j.ok ? 'ok' : 'warn');
       if (!j.ok) showToast('경고와 함께 컴파일됨 — 로그 확인');
     } else {
@@ -2301,6 +2298,25 @@ function recordLatexChat(c, text) {
   persistLatexChat();
 }
 
+// 현재 보고 있지 않은 프로젝트의 chat.json 에 메시지를 직접 append(읽기-수정-쓰기).
+// 한 프로젝트에서 질문 후 다른 프로젝트로 넘어가도 답이 원래 프로젝트에 기록되게 한다.
+async function appendChatToProject(projectId, ...msgs) {
+  try {
+    let chats = [];
+    const res = await fetch(`/api/library/projects/${projectId}/chat`);
+    if (res.ok) { const j = await res.json(); if (Array.isArray(j.chats)) chats = j.chats; }
+    chats.push(...msgs);
+    await fetch(`/api/library/projects/${projectId}/chat`, {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chats: chats.slice(-200) }),
+    });
+  } catch { /* 저장 실패는 조용히 무시 */ }
+}
+
+// 전송 버튼 활성/비활성: 지금 보고 있는 프로젝트가 처리 중이면 비활성.
+function updateLatexChatSendState() {
+  if (latexChatSend) latexChatSend.disabled = !!(state.currentProjectId && state.busyProjects.has(state.currentProjectId));
+}
+
 function renderLatexChatHistory() {
   if (!latexChatLog) return;
   latexChatLog.innerHTML = '';
@@ -2335,27 +2351,49 @@ function clearLatexChat() {
 
 async function sendLatexChat() {
   const instruction = (latexChatInput && latexChatInput.value || '').trim();
-  if (!instruction || state.latexChatBusy) return;
+  if (!instruction) return;
   if (!state.currentProjectId || !state.currentLatexFile) { showToast('편집할 파일을 먼저 여세요'); return; }
-  state.latexChatBusy = true;
-  if (latexChatSend) latexChatSend.disabled = true;
-  // 직전까지의 대화(현재 지시 제외)를 함께 보내 맥락 유지 — "그 부분", "알아서 수정" 해석용
+  // 이 요청이 속한 프로젝트·파일을 고정한다(중간에 다른 프로젝트로 넘어가도 여기로 기록).
+  const projectId = state.currentProjectId;
+  const file = state.currentLatexFile;
+  if (state.busyProjects.has(projectId)) return; // 이 프로젝트는 이미 처리 중
+  state.busyProjects.add(projectId);
+  updateLatexChatSendState();
+
+  const isCurrent = () => state.currentProjectId === projectId; // 지금 이 프로젝트를 보고 있나?
   const historyToSend = state.latexChatHistory.slice(-8).map((h) => ({ c: h.c, text: h.text }));
-  const userEl = appendLatexChat('user', instruction);
-  if (userEl) recordLatexChat('user', userEl.textContent);
+
+  // 사용자 메시지 기록(원래 프로젝트에). 보고 있으면 화면에도 추가.
+  const userText = '🧑 ' + instruction;
+  if (isCurrent()) { appendLatexChat('user', instruction); state.latexChatHistory.push({ c: 'user', text: userText }); persistLatexChat(); }
+  else { await appendChatToProject(projectId, { c: 'user', text: userText }); }
   latexChatInput.value = '';
-  latexChatInput.style.height = 'auto'; // 전송 후 높이 초기화
-  const pending = appendLatexChat('ai', '🧭 시작…');
-  pending.classList.add('working');
+  latexChatInput.style.height = 'auto';
+  let pending = isCurrent() ? appendLatexChat('ai', '🧭 시작…') : null;
+  if (pending) pending.classList.add('working');
+
+  // 완료 메시지를 원래 프로젝트에 기록 + (보고 있으면) 화면 반영.
+  const finishMsg = async (text, isError) => {
+    if (isCurrent()) {
+      if (pending && pending.isConnected) { pending.textContent = text; pending.classList.remove('working'); if (isError) pending.classList.add('error'); }
+      else { const el = appendLatexChat('ai', ''); if (el) { el.textContent = text; if (isError) el.classList.add('error'); } }
+      state.latexChatHistory.push({ c: isError ? 'ai error' : 'ai', text });
+      persistLatexChat();
+      if (latexChatLog) latexChatLog.scrollTop = latexChatLog.scrollHeight;
+    } else {
+      await appendChatToProject(projectId, { c: isError ? 'ai error' : 'ai', text });
+    }
+  };
+
   try {
-    if (state.latexDirty) await saveCurrentLatexFile(); // 현재 편집분 먼저 저장
-    const res = await fetch(`/api/library/projects/${state.currentProjectId}/chat-edit`, {
+    if (isCurrent() && state.latexDirty) await saveCurrentLatexFile(); // 현재 편집분 먼저 저장
+    const res = await fetch(`/api/library/projects/${projectId}/chat-edit`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ file: state.currentLatexFile, instruction, history: historyToSend }),
+      body: JSON.stringify({ file, instruction, history: historyToSend }),
     });
     if (!res.ok) { const j = await res.json().catch(() => ({})); throw new Error(j.error || `HTTP ${res.status}`); }
 
-    // SSE 스트림 소비 — 단계(분류→계획→작성→검토→컴파일)를 실시간 표시
+    // SSE 스트림 소비 — 진행 단계는 보고 있을 때만 표시
     const reader = res.body.getReader();
     const decoder = new TextDecoder('utf-8');
     let buffer = '';
@@ -2372,34 +2410,27 @@ async function sendLatexChat() {
         let ev; try { ev = JSON.parse(lines.join('\n')); } catch { continue; }
         if (ev.stage === 'done') final = ev;
         else if (ev.stage === 'error') throw new Error(ev.error || '오류');
-        else if (ev.label) { pending.textContent = ev.label; latexChatLog.scrollTop = latexChatLog.scrollHeight; }
+        else if (ev.label && isCurrent() && pending && pending.isConnected) { pending.textContent = ev.label; if (latexChatLog) latexChatLog.scrollTop = latexChatLog.scrollHeight; }
       }
     }
     if (!final) throw new Error('응답이 비었습니다');
 
-    pending.classList.remove('working');
-
     // 근거 탐색·웹 리서치(읽기 전용): 파일·PDF 변경 없이 답변만 표시
     if (final.readOnly) {
       const icon = final.module === 'research' ? '🌐' : final.module === 'chat' ? '💬' : final.module === 'workspace' ? '🛠️' : '🔎';
-      pending.textContent = `${icon} ${final.answer || final.note || '결과 없음'}`;
-      recordLatexChat('ai', pending.textContent);
-      latexChatLog.scrollTop = latexChatLog.scrollHeight;
+      await finishMsg(`${icon} ${final.answer || final.note || '결과 없음'}`);
       return;
     }
 
     const moduleLabel = { writing: '✍️ 본문', figure: '📊 그림/표', citation: '📚 인용', workspace: '🛠️ 워크스페이스' }[final.module] || '';
-    pending.textContent = `🤖 ${moduleLabel ? '[' + moduleLabel + '] ' : ''}${final.note || '수정 완료'}`;
-    recordLatexChat('ai', pending.textContent);
-    // 워크스페이스 편집은 여러 파일을 바꿀 수 있음 → 파일 트리 갱신
+    await finishMsg(`🤖 ${moduleLabel ? '[' + moduleLabel + '] ' : ''}${final.note || '수정 완료'}`);
+
+    // 파일 트리·에디터·PDF 갱신은 이 프로젝트를 보고 있을 때만(아니면 파일은 디스크에 이미 반영됨).
+    if (!isCurrent()) return;
     if (Array.isArray(final.changedFiles) && final.changedFiles.length) {
       try {
-        const r = await fetch(`/api/library/projects/${state.currentProjectId}`);
-        if (r.ok) {
-          const jj = await r.json();
-          state.latexFiles = jj.files || state.latexFiles;
-          renderLatexFileTree();
-        }
+        const r = await fetch(`/api/library/projects/${projectId}`);
+        if (r.ok) { const jj = await r.json(); state.latexFiles = jj.files || state.latexFiles; renderLatexFileTree(); }
       } catch { /* 트리 갱신 실패는 치명적이지 않음 */ }
     }
     if (latexEditor && typeof final.content === 'string' && final.file === state.currentLatexFile) {
@@ -2408,26 +2439,23 @@ async function sendLatexChat() {
       latexEditor.setContent(state.currentLatexFile, final.content);
       state.latexDirty = false;
       updateLatexSaveState();
-      // 수정 전/후 비교 뷰 자동 표시(실제 변경이 있을 때만)
       if (beforeContent !== final.content) showLatexDiff(beforeContent, final.content, state.currentLatexFile);
     }
     showLatexLog(final.log || '');
     setLatexCompileStatus(final.compiled ? 'ok' : 'fail');
-    showProjectPdf(state.currentProjectId, !!final.compiled);
+    showProjectPdf(projectId, !!final.compiled, true); // 편집 후 재컴파일 — PDF 위치 유지
     if (!final.compiled && latexLog) latexLog.hidden = false;
   } catch (err) {
-    pending.classList.remove('working');
-    pending.textContent = '🤖 실패: ' + err.message;
-    pending.classList.add('error');
-    recordLatexChat('ai error', pending.textContent);
+    await finishMsg('🤖 실패: ' + err.message, true);
   } finally {
-    state.latexChatBusy = false;
-    if (latexChatSend) latexChatSend.disabled = false;
+    state.busyProjects.delete(projectId);
+    updateLatexChatSendState();
   }
 }
 
 // 컴파일 결과 PDF 를 우측 패널(PDF.js)에 로드. 컴파일 전이면 빈 상태로 패널만 연다.
-function showProjectPdf(projectId, hasPdf = true) {
+// preserveScroll: 재컴파일 시 보던 위치 유지(맨 위로 안 튐).
+function showProjectPdf(projectId, hasPdf = true, preserveScroll = false) {
   if (!pdfViewer) return;
   pdfViewer.setFigureCandidates?.(false); // LaTeX 결과엔 figure 클릭-분석 박스 숨김
   revokePdfBlob();
@@ -2440,7 +2468,7 @@ function showProjectPdf(projectId, hasPdf = true) {
   if (hasPdf) {
     const url = `/api/library/projects/${projectId}/pdf?t=${Date.now()}`;
     if (pdfOpenExternal) pdfOpenExternal.href = url;
-    pdfViewer.load(url).catch(err => console.warn('컴파일 PDF 로드 실패', err));
+    pdfViewer.load(url, { preserveScroll }).catch(err => console.warn('컴파일 PDF 로드 실패', err));
   } else {
     pdfViewer.destroy();
     if (pdfBody) pdfBody.innerHTML = '<div class="pdf-placeholder">컴파일하면 여기에 PDF가 표시됩니다</div>';
@@ -2758,6 +2786,16 @@ if (latexFullscreenBtn) latexFullscreenBtn.addEventListener('click', () => {
 });
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && document.body.classList.contains('latex-fullscreen')) setLatexFullscreen(false);
+});
+
+// Ctrl/Cmd+S → 컴파일 (에디터 바깥에 포커스가 있어도 동작). compileLatex의 latexBusy 가드로 중복 방지.
+document.addEventListener('keydown', (e) => {
+  if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
+    if (state.mode === 'latex' && state.currentProjectId) {
+      e.preventDefault();
+      compileLatex();
+    }
+  }
 });
 
 for (const tab of workspaceTabs) {

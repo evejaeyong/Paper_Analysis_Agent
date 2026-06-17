@@ -91,9 +91,13 @@ export async function createLatexEditor(container) {
   let suppress = false;
   editor.onDidChangeModelContent(() => { if (!suppress && changeCb) changeCb(editor.getValue()); });
 
-  // Ctrl/Cmd+S 저장 훅
+  // Ctrl/Cmd+S → 컴파일(컴파일이 저장도 먼저 수행). compileCb 없으면 저장만.
   let saveCb = null;
-  editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => { if (saveCb) saveCb(); });
+  let compileCb = null;
+  editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
+    if (compileCb) compileCb();
+    else if (saveCb) saveCb();
+  });
 
   // 수정 전/후 비교용 diff 에디터 (지연 생성)
   let diffEditor = null;
@@ -114,6 +118,7 @@ export async function createLatexEditor(container) {
     getValue() { return editor.getValue(); },
     onChange(cb) { changeCb = cb; },
     onSave(cb) { saveCb = cb; },
+    onCompile(cb) { compileCb = cb; },
     gotoLine(line) {
       const total = editor.getModel()?.getLineCount() || 1;
       const ln = Math.max(1, Math.min(total, Number(line) | 0 || 1));
