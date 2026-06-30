@@ -551,6 +551,12 @@ const pdfZoomInBtn = $('pdfZoomInBtn');
 const pdfZoomOutBtn = $('pdfZoomOutBtn');
 const pdfZoomResetBtn = $('pdfZoomResetBtn');
 const pdfZoomSelect = $('pdfZoomSelect');
+const pdfFindBar = $('pdfFindBar');
+const pdfFindInput = $('pdfFindInput');
+const pdfFindCount = $('pdfFindCount');
+const pdfFindPrev = $('pdfFindPrev');
+const pdfFindNext = $('pdfFindNext');
+const pdfFindClose = $('pdfFindClose');
 const paneResizer = $('paneResizer');
 const pdfTitleEl = $('pdfTitle');
 const pdfOpenExternal = $('pdfOpenExternal');
@@ -838,6 +844,44 @@ if (pdfSelectBtn) pdfSelectBtn.addEventListener('click', () => {
 if (pdfZoomInBtn) pdfZoomInBtn.addEventListener('click', () => pdfViewer?.zoomIn?.());
 if (pdfZoomOutBtn) pdfZoomOutBtn.addEventListener('click', () => pdfViewer?.zoomOut?.());
 if (pdfZoomResetBtn) pdfZoomResetBtn.addEventListener('click', () => pdfViewer?.resetZoom?.());
+
+// ---- PDF 내 찾기(Ctrl+F) ----
+function setPdfFindCount(r) {
+  if (!pdfFindCount) return;
+  if (!r || !pdfFindInput || !pdfFindInput.value) { pdfFindCount.textContent = ''; return; }
+  pdfFindCount.textContent = r.total ? `${r.current}/${r.total}` : '없음';
+}
+function openPdfFind() {
+  if (!pdfFindBar || !pdfViewer?.find) return;
+  pdfFindBar.hidden = false;
+  pdfFindInput.focus();
+  pdfFindInput.select();
+  if (pdfFindInput.value) setPdfFindCount(pdfViewer.find(pdfFindInput.value));
+}
+function closePdfFind() {
+  if (!pdfFindBar) return;
+  pdfFindBar.hidden = true;
+  pdfViewer?.clearFind?.();
+  setPdfFindCount(null);
+}
+if (pdfFindInput) {
+  pdfFindInput.addEventListener('input', () => setPdfFindCount(pdfViewer?.find?.(pdfFindInput.value)));
+  pdfFindInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); setPdfFindCount(pdfViewer?.findStep?.(e.shiftKey ? -1 : 1)); }
+    else if (e.key === 'Escape') { e.preventDefault(); closePdfFind(); }
+  });
+}
+if (pdfFindPrev) pdfFindPrev.addEventListener('click', () => setPdfFindCount(pdfViewer?.findStep?.(-1)));
+if (pdfFindNext) pdfFindNext.addEventListener('click', () => setPdfFindCount(pdfViewer?.findStep?.(1)));
+if (pdfFindClose) pdfFindClose.addEventListener('click', () => closePdfFind());
+
+// Ctrl/Cmd+F: 에디터에 포커스면 Monaco 찾기에 양보, 아니면 PDF 찾기.
+document.addEventListener('keydown', (e) => {
+  if (!((e.ctrlKey || e.metaKey) && (e.key === 'f' || e.key === 'F'))) return;
+  if (latexEditorHost && latexEditorHost.contains(document.activeElement)) return;
+  if (latexDiffHost && latexDiffHost.contains(document.activeElement)) return;
+  if (pdfState.available && pdfState.open && pdfViewer?.isLoaded?.()) { e.preventDefault(); openPdfFind(); }
+}, true);
 if (pdfZoomSelect) pdfZoomSelect.addEventListener('change', () => {
   const v = parseFloat(pdfZoomSelect.value);
   if (!Number.isNaN(v)) pdfViewer?.setZoom?.(v);
