@@ -161,6 +161,13 @@
             <a id="pdfOpenExternal" class="pdf-head-btn" href="#" target="_blank" rel="noopener" title="새 창에서 열기">↗</a>
             <button type="button" id="pdfCloseBtn" class="pdf-head-btn" title="패널 닫기" aria-label="패널 닫기">×</button>
           </div>
+          <div id="pdfFindBar" class="pdf-find-bar" hidden>
+            <input id="pdfFindInput" type="text" class="pdf-find-input" placeholder="PDF에서 찾기" />
+            <span id="pdfFindCount" class="pdf-find-count"></span>
+            <button type="button" id="pdfFindPrev" class="pdf-head-btn" title="이전 (Shift+Enter)" aria-label="이전">▲</button>
+            <button type="button" id="pdfFindNext" class="pdf-head-btn" title="다음 (Enter)" aria-label="다음">▼</button>
+            <button type="button" id="pdfFindClose" class="pdf-head-btn" title="닫기 (Esc)" aria-label="닫기">×</button>
+          </div>
           <div id="pdfBody" class="pdf-pane-body"></div>
         </aside>
       </div>

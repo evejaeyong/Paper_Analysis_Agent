@@ -48,6 +48,8 @@ export function createPdfViewer(container) {
   let zoomTimer = 0;         // 휠 줌 디바운스 타이머
   let pendingZoom = null;    // 디바운스 대기 중 목표 { scale, anchor }
   let zoomChangeHandler = null; // 배율이 바뀔 때 호출(현재 % 표시 갱신용)
+  let findMatches = [];      // Ctrl+F 찾기: [{cs, ce}] (compact 인덱스 범위)
+  let findIndex = -1;        // 현재 일치 인덱스
   let selectionMode = false;
   let selectionHandler = null;
   let reverseHandler = null;  // SyncTeX 역방향: 더블클릭 → {page, x, y}(pt, 좌상단)
@@ -102,6 +104,7 @@ export function createPdfViewer(container) {
     selectionMode = false;
     clearSelectionVisuals();
     unwrapHighlights();
+    findMatches = []; findIndex = -1; // 찾기 상태 초기화(문서 재로딩 시)
     for (const t of renderTasks) {
       try { t.cancel(); } catch { /* ignore */ }
     }
@@ -1088,6 +1091,32 @@ export function createPdfViewer(container) {
     reverseHandler = typeof callback === 'function' ? callback : null;
   }
 
+  // ---- PDF 내 찾기 (Ctrl+F) ----
+  // 기존 텍스트 인덱스를 재사용해 모든 일치를 찾고, 현재 일치를 하이라이트·스크롤한다.
+  function pdfFind(query) {
+    findMatches = [];
+    findIndex = -1;
+    unwrapHighlights();
+    const q = normalizeQuery(query || '');
+    if (!doc || !index || !q) return { total: 0, current: 0 };
+    findMatches = findAllInCompact(q).map(cs => ({ cs, ce: cs + q.length }));
+    if (findMatches.length) { findIndex = 0; showFindMatch(); }
+    return { total: findMatches.length, current: findMatches.length ? 1 : 0 };
+  }
+  function showFindMatch() {
+    if (findIndex < 0 || findIndex >= findMatches.length) return;
+    const m = findMatches[findIndex];
+    const mark = applyHighlight(m.cs, m.ce); // 현재 일치만 강조(이전 강조는 내부에서 해제)
+    if (mark) { mark.scrollIntoView({ block: 'center', behavior: 'smooth' }); flash(mark); }
+  }
+  function pdfFindStep(dir) {
+    if (!findMatches.length) return { total: 0, current: 0 };
+    findIndex = (findIndex + (dir < 0 ? -1 : 1) + findMatches.length) % findMatches.length;
+    showFindMatch();
+    return { total: findMatches.length, current: findIndex + 1 };
+  }
+  function pdfFindClear() { findMatches = []; findIndex = -1; unwrapHighlights(); }
+
   // figure 클릭-분석 후보 박스 on/off. 끄면 기존에 그려진 박스도 제거.
   function setFigureCandidates(on) {
     figureCandidatesOn = !!on;
@@ -1110,6 +1139,9 @@ export function createPdfViewer(container) {
     isSelectionMode,
     onReverseSearch,
     setFigureCandidates,
+    find: pdfFind,
+    findStep: pdfFindStep,
+    clearFind: pdfFindClear,
     zoomIn,
     zoomOut,
     resetZoom,
