@@ -144,7 +144,10 @@
           <div class="pdf-pane-head">
             <span id="pdfTitle" class="pdf-title">논문</span>
             <span class="spacer"></span>
-            <span id="pdfPageInfo" class="pdf-page-info" title="현재 페이지 / 전체 페이지"></span>
+            <span class="pdf-page-info" title="페이지 번호 입력 후 Enter로 이동">
+              <input id="pdfPageInput" class="pdf-page-input" type="text" inputmode="numeric" aria-label="페이지 이동" />
+              <span id="pdfPageTotal" class="pdf-page-total"></span>
+            </span>
             <button type="button" id="pdfZoomOutBtn" class="pdf-head-btn" title="축소 (Ctrl+휠)" aria-label="축소">−</button>
             <select id="pdfZoomSelect" class="pdf-head-select" title="확대/축소 비율" aria-label="확대/축소 비율">
               <option value="cur" hidden>100%</option>

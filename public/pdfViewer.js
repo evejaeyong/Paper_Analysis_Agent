@@ -48,8 +48,10 @@ export function createPdfViewer(container) {
   let zoomTimer = 0;         // 휠 줌 디바운스 타이머
   let pendingZoom = null;    // 디바운스 대기 중 목표 { scale, anchor }
   let zoomChangeHandler = null; // 배율이 바뀔 때 호출(현재 % 표시 갱신용)
-  let findMatches = [];      // Ctrl+F 찾기: [{cs, ce}] (compact 인덱스 범위)
+  let findRanges = [];       // Ctrl+F 찾기: DOM Range[] (CSS Custom Highlight용)
   let findIndex = -1;        // 현재 일치 인덱스
+  let findHl = null;         // 전체 일치 하이라이트
+  let curHl = null;          // 현재 일치 하이라이트
   let selectionMode = false;
   let selectionHandler = null;
   let reverseHandler = null;  // SyncTeX 역방향: 더블클릭 → {page, x, y}(pt, 좌상단)
@@ -104,7 +106,9 @@ export function createPdfViewer(container) {
     selectionMode = false;
     clearSelectionVisuals();
     unwrapHighlights();
-    findMatches = []; findIndex = -1; // 찾기 상태 초기화(문서 재로딩 시)
+    findRanges = []; findIndex = -1; // 찾기 상태 초기화(문서 재로딩 시)
+    if (findHl) findHl.clear();
+    if (curHl) curHl.clear();
     currentPageNo = 0;
     for (const t of renderTasks) {
       try { t.cancel(); } catch { /* ignore */ }
@@ -1127,30 +1131,73 @@ export function createPdfViewer(container) {
   }
 
   // ---- PDF 내 찾기 (Ctrl+F) ----
-  // 기존 텍스트 인덱스를 재사용해 모든 일치를 찾고, 현재 일치를 하이라이트·스크롤한다.
-  function pdfFind(query) {
-    findMatches = [];
-    findIndex = -1;
-    unwrapHighlights();
-    const q = normalizeQuery(query || '');
-    if (!doc || !index || !q) return { total: 0, current: 0 };
-    findMatches = findAllInCompact(q).map(cs => ({ cs, ce: cs + q.length }));
-    if (findMatches.length) { findIndex = 0; showFindMatch(); }
-    return { total: findMatches.length, current: findMatches.length ? 1 : 0 };
+  // 개행·공백·구두점을 무시하고(loose 인덱스) 찾는다. 하이라이트는 CSS Custom Highlight API로
+  // DOM을 건드리지 않고 그린다 → 여러 일치를 동시에 표시하고, 앞뒤로 오가도 노드 참조가 깨지지 않는다.
+  function ensureFindHighlights() {
+    if (!window.CSS || !CSS.highlights || typeof Highlight === 'undefined') return false;
+    if (!findHl) { findHl = new Highlight(); CSS.highlights.set('pdf-find', findHl); }
+    if (!curHl) { curHl = new Highlight(); try { curHl.priority = 1; } catch { /* ignore */ } CSS.highlights.set('pdf-find-current', curHl); }
+    return true;
   }
-  function showFindMatch() {
-    if (findIndex < 0 || findIndex >= findMatches.length) return;
-    const m = findMatches[findIndex];
-    const mark = applyHighlight(m.cs, m.ce); // 현재 일치만 강조(이전 강조는 내부에서 해제)
-    if (mark) { mark.scrollIntoView({ block: 'center', behavior: 'smooth' }); flash(mark); }
+  // compact 범위 → DOM Range (원본 텍스트 노드/오프셋 기반, DOM 미변형).
+  function rangeForCompact(cs, ce) {
+    const ns = index.compactToNorm[cs];
+    const ne = index.compactToNorm[ce - 1];
+    if (ns == null || ne == null) return null;
+    const a = index.map[ns], b = index.map[ne];
+    if (!a || !a.node || !b || !b.node || !a.node.parentNode || !b.node.parentNode) return null;
+    try { const r = document.createRange(); r.setStart(a.node, a.start); r.setEnd(b.node, b.end); return r; }
+    catch { return null; }
+  }
+  // loose(문자/숫자만) 인덱스에서 모든 일치 → compact 범위 목록. 공백/개행/구두점 무시.
+  function findAllLoose(looseQ) {
+    const hits = [];
+    if (!index || !index.loose || !looseQ) return hits;
+    let from = 0;
+    while (true) {
+      const idx = index.loose.indexOf(looseQ, from);
+      if (idx === -1) break;
+      const cs = index.looseToCompact[idx];
+      const last = index.looseToCompact[idx + looseQ.length - 1];
+      if (cs != null && last != null) hits.push({ cs, ce: last + 1 });
+      from = idx + 1;
+    }
+    return hits;
+  }
+  function pdfFind(query) {
+    findRanges = [];
+    findIndex = -1;
+    if (findHl) findHl.clear();
+    if (curHl) curHl.clear();
+    const looseQ = Array.from(normalizeQuery(query || '')).filter(isSearchChar).join('');
+    if (!doc || !index || !looseQ) return { total: 0, current: 0 };
+    const hits = findAllLoose(looseQ);
+    const hasHl = ensureFindHighlights();
+    for (const h of hits) {
+      const r = rangeForCompact(h.cs, h.ce);
+      if (r) { findRanges.push(r); if (hasHl) findHl.add(r); }
+    }
+    if (findRanges.length) { findIndex = 0; showFindCurrent(); }
+    return { total: findRanges.length, current: findRanges.length ? 1 : 0 };
+  }
+  function showFindCurrent() {
+    if (findIndex < 0 || findIndex >= findRanges.length) return;
+    const r = findRanges[findIndex];
+    if (curHl) { curHl.clear(); curHl.add(r); }
+    const el = r.startContainer.nodeType === 3 ? r.startContainer.parentElement : r.startContainer;
+    if (el && el.scrollIntoView) el.scrollIntoView({ block: 'center', behavior: 'smooth' });
   }
   function pdfFindStep(dir) {
-    if (!findMatches.length) return { total: 0, current: 0 };
-    findIndex = (findIndex + (dir < 0 ? -1 : 1) + findMatches.length) % findMatches.length;
-    showFindMatch();
-    return { total: findMatches.length, current: findIndex + 1 };
+    if (!findRanges.length) return { total: 0, current: 0 };
+    findIndex = (findIndex + (dir < 0 ? -1 : 1) + findRanges.length) % findRanges.length;
+    showFindCurrent();
+    return { total: findRanges.length, current: findIndex + 1 };
   }
-  function pdfFindClear() { findMatches = []; findIndex = -1; unwrapHighlights(); }
+  function pdfFindClear() {
+    findRanges = []; findIndex = -1;
+    if (findHl) findHl.clear();
+    if (curHl) curHl.clear();
+  }
 
   // figure 클릭-분석 후보 박스 on/off. 끄면 기존에 그려진 박스도 제거.
   function setFigureCandidates(on) {
