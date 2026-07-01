@@ -105,6 +105,7 @@ export function createPdfViewer(container) {
     clearSelectionVisuals();
     unwrapHighlights();
     findMatches = []; findIndex = -1; // 찾기 상태 초기화(문서 재로딩 시)
+    currentPageNo = 0;
     for (const t of renderTasks) {
       try { t.cancel(); } catch { /* ignore */ }
     }
@@ -719,6 +720,39 @@ export function createPdfViewer(container) {
     zoomBy(e.deltaY < 0 ? ZOOM_STEP : 1 / ZOOM_STEP, e.clientX, e.clientY);
   }, { passive: false });
 
+  // ---- 현재 페이지 추적 (스크롤에 따라) ----
+  let pageChangeHandler = null;
+  let currentPageNo = 0;
+  let pageRaf = 0;
+  // 뷰포트 세로 중앙에 걸리는 페이지를 "현재 페이지"로 본다.
+  function currentPageInView() {
+    const pages = container.querySelectorAll('.pdf-page');
+    if (!pages.length || !doc) return 0;
+    const cRect = container.getBoundingClientRect();
+    const midY = cRect.top + container.clientHeight / 2;
+    let best = 1, bestDist = Infinity;
+    for (const p of pages) {
+      const r = p.getBoundingClientRect();
+      if (midY >= r.top && midY < r.bottom) return Number(p.dataset.page) || 1;
+      const c = (r.top + r.bottom) / 2;
+      const d = Math.abs(c - midY);
+      if (d < bestDist) { bestDist = d; best = Number(p.dataset.page) || 1; }
+    }
+    return best;
+  }
+  function emitPageChange() {
+    const pg = currentPageInView();
+    if (pg && pg !== currentPageNo) {
+      currentPageNo = pg;
+      if (pageChangeHandler) pageChangeHandler({ page: pg, count: doc ? doc.numPages : 0 });
+    }
+  }
+  function onPageChange(callback) { pageChangeHandler = typeof callback === 'function' ? callback : null; }
+  container.addEventListener('scroll', () => {
+    if (pageRaf) return;
+    pageRaf = requestAnimationFrame(() => { pageRaf = 0; emitPageChange(); });
+  });
+
   // 모든 텍스트 레이어 span을 평탄화해 검색 인덱스 구축.
   function buildIndex() {
     const norm = [];                 // 정규화 문자 배열
@@ -1019,6 +1053,7 @@ export function createPdfViewer(container) {
     if (keepScroll && beforeH > 0) {
       container.scrollTop = (beforeTop / beforeH) * (container.scrollHeight || beforeH);
     }
+    currentPageNo = 0; emitPageChange(); // 현재 페이지 표시 갱신(초기 1 또는 복원 위치)
   }
 
   function onZoomChange(callback) {
@@ -1142,6 +1177,7 @@ export function createPdfViewer(container) {
     find: pdfFind,
     findStep: pdfFindStep,
     clearFind: pdfFindClear,
+    onPageChange,
     zoomIn,
     zoomOut,
     resetZoom,

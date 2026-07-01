@@ -551,6 +551,7 @@ const pdfZoomInBtn = $('pdfZoomInBtn');
 const pdfZoomOutBtn = $('pdfZoomOutBtn');
 const pdfZoomResetBtn = $('pdfZoomResetBtn');
 const pdfZoomSelect = $('pdfZoomSelect');
+const pdfPageInfo = $('pdfPageInfo');
 const pdfFindBar = $('pdfFindBar');
 const pdfFindInput = $('pdfFindInput');
 const pdfFindCount = $('pdfFindCount');
@@ -897,6 +898,13 @@ function updatePdfZoomDisplay(scale) {
   pdfZoomSelect.value = preset ? preset.value : 'cur';
 }
 if (pdfViewer?.onZoomChange) pdfViewer.onZoomChange(updatePdfZoomDisplay);
+
+// 현재 페이지 표시(예: 3/12) — 스크롤/로드 시 갱신
+function updatePdfPageInfo(info) {
+  if (!pdfPageInfo) return;
+  pdfPageInfo.textContent = (info && info.count) ? `${info.page}/${info.count}` : '';
+}
+if (pdfViewer?.onPageChange) pdfViewer.onPageChange(updatePdfPageInfo);
 
 if (paneResizer) {
   paneResizer.addEventListener('mousedown', (e) => {
@@ -2515,6 +2523,7 @@ function showProjectPdf(projectId, hasPdf = true, preserveScroll = false) {
     pdfViewer.load(url, { preserveScroll }).catch(err => console.warn('컴파일 PDF 로드 실패', err));
   } else {
     pdfViewer.destroy();
+    if (pdfPageInfo) pdfPageInfo.textContent = '';
     if (pdfBody) pdfBody.innerHTML = '<div class="pdf-placeholder">컴파일하면 여기에 PDF가 표시됩니다</div>';
   }
 }
