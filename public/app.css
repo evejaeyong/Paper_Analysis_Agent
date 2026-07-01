@@ -177,7 +177,15 @@ body.resizing .pane-resizer { background: var(--accent); }
   border-radius: 6px; padding: 4px 8px; font-size: 12.5px; outline: none;
 }
 .pdf-find-count { font-size: 11.5px; color: var(--muted); min-width: 48px; text-align: center; }
-.pdf-page-info { font-size: 11.5px; color: var(--muted); min-width: 42px; text-align: center; white-space: nowrap; }
+.pdf-page-info { font-size: 11.5px; color: var(--muted); display: inline-flex; align-items: center; gap: 2px; white-space: nowrap; }
+.pdf-page-input {
+  width: 34px; background: #11131a; color: var(--text); border: 1px solid var(--border);
+  border-radius: 5px; padding: 2px 4px; font-size: 11.5px; text-align: center; outline: none;
+}
+.pdf-page-total { color: var(--muted); }
+/* PDF 찾기 하이라이트(DOM 미변형) — 텍스트 레이어 위에 배경만 칠함 */
+::highlight(pdf-find) { background-color: rgba(250, 204, 21, 0.4); }
+::highlight(pdf-find-current) { background-color: rgba(245, 158, 11, 0.75); }
 .pdf-title {
   font-size: 12.5px;
   color: var(--muted);

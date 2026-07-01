@@ -551,7 +551,8 @@ const pdfZoomInBtn = $('pdfZoomInBtn');
 const pdfZoomOutBtn = $('pdfZoomOutBtn');
 const pdfZoomResetBtn = $('pdfZoomResetBtn');
 const pdfZoomSelect = $('pdfZoomSelect');
-const pdfPageInfo = $('pdfPageInfo');
+const pdfPageInput = $('pdfPageInput');
+const pdfPageTotal = $('pdfPageTotal');
 const pdfFindBar = $('pdfFindBar');
 const pdfFindInput = $('pdfFindInput');
 const pdfFindCount = $('pdfFindCount');
@@ -899,12 +900,27 @@ function updatePdfZoomDisplay(scale) {
 }
 if (pdfViewer?.onZoomChange) pdfViewer.onZoomChange(updatePdfZoomDisplay);
 
-// 현재 페이지 표시(예: 3/12) — 스크롤/로드 시 갱신
+// 현재 페이지 표시(입력칸) + 전체(/12) — 스크롤/로드 시 갱신. 입력 후 Enter로 이동.
+let pdfPageCount = 0;
 function updatePdfPageInfo(info) {
-  if (!pdfPageInfo) return;
-  pdfPageInfo.textContent = (info && info.count) ? `${info.page}/${info.count}` : '';
+  pdfPageCount = (info && info.count) || 0;
+  if (pdfPageTotal) pdfPageTotal.textContent = pdfPageCount ? `/${pdfPageCount}` : '';
+  if (pdfPageInput && document.activeElement !== pdfPageInput) {
+    pdfPageInput.value = pdfPageCount ? String(info.page) : '';
+  }
 }
 if (pdfViewer?.onPageChange) pdfViewer.onPageChange(updatePdfPageInfo);
+if (pdfPageInput) {
+  pdfPageInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const n = parseInt(pdfPageInput.value, 10);
+      if (Number.isFinite(n) && n >= 1 && n <= pdfPageCount) pdfViewer?.scrollToPage?.(n);
+      pdfPageInput.blur();
+    } else if (e.key === 'Escape') { pdfPageInput.blur(); }
+  });
+  pdfPageInput.addEventListener('focus', () => pdfPageInput.select());
+}
 
 if (paneResizer) {
   paneResizer.addEventListener('mousedown', (e) => {
@@ -2523,7 +2539,9 @@ function showProjectPdf(projectId, hasPdf = true, preserveScroll = false) {
     pdfViewer.load(url, { preserveScroll }).catch(err => console.warn('컴파일 PDF 로드 실패', err));
   } else {
     pdfViewer.destroy();
-    if (pdfPageInfo) pdfPageInfo.textContent = '';
+    pdfPageCount = 0;
+    if (pdfPageInput) pdfPageInput.value = '';
+    if (pdfPageTotal) pdfPageTotal.textContent = '';
     if (pdfBody) pdfBody.innerHTML = '<div class="pdf-placeholder">컴파일하면 여기에 PDF가 표시됩니다</div>';
   }
 }
