@@ -13,7 +13,10 @@ import { takeSnapshot, diffSnapshot, restoreSnapshot } from '../core/projectSnap
 import { compileProject } from '../core/latexCompiler.js';
 import { findEvidence } from './evidence.js';
 
-const MAX_CHARS = 80000;
+// 멀티에이전트(STORM 폴백) 경로에서 전문(全文)을 프롬프트에 담을 때의 상한.
+// 워크스페이스 편집(기본)은 파일을 도구로 직접 읽어 이 제한이 없다. 긴 논문(수만~십만 자)도
+// 처리되도록 넉넉히 둔다(Opus 컨텍스트 여유). 이보다 크면 워크스페이스 편집 사용 권장.
+const MAX_CHARS = 400000;
 const MAX_COMPILE_FIXES = 2;
 
 // 가장 큰 코드펜스 블록 추출(수정된 전체 파일)
