@@ -6,6 +6,17 @@ KPAC의 논문 읽기(QA) 에이전트를 Electron UI 없이 headless로 배치 
 > 평가 실행 로그(`runs/`, 1,000+ JSON)와 논문 전문이 포함된 데이터셋(`data/`)은 용량 문제로
 > 커밋하지 않는다. 데이터셋은 `scripts/export_qasper*.py`로 재생성 가능(공개 데이터셋 QASPER 기반).
 
+### `results/` 문서의 출처 3계층
+
+| 계층 | 문서 | 숫자의 출처 |
+|---|---|---|
+| ① 기계 채점 (LLM 개입 0) | quote_check, perturbed_summary, quote_guard_ab | 문자열 매칭 스크립트 — 결정적, 재실행 시 동일 |
+| ② LLM judge 판정의 스크립트 집계 | summary, unans_summary, falseprem_summary, quote_guard_judge_pairs | 집계는 스크립트, 개별 판정은 LLM judge (아래 "채점 신뢰성 관리"로 검증) |
+| ③ 분석·감사 문서 (사람+AI 작성) | hallucination_summary 해석부, pilot_manual_scoring, judge_check_claude, gold_audit | 서술 문서 — 각 파일 상단에 작성 주체·잠정 여부 명시 |
+
+각 스크립트 생성 문서는 상단에 생성 스크립트가 명시돼 있고, 원천 데이터(`runs/*.json`, `runs/*.judge.json`)에서
+`node eval/scripts/aggregate.mjs` 등으로 LLM 호출 없이 재계산된다.
+
 ## 평가 설계
 
 | 요소 | 내용 |
