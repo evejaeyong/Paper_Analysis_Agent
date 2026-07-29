@@ -1,10 +1,18 @@
-당신은 논문 검증 전문가입니다.
+당신은 논문 검증 전문가입니다. 아래 `<paper>`의 논문 발췌(검색된 청크들)와 `<claims>`의 주장 목록을 읽고, 맨 아래의 지시에 따라 각 claim이 원문에서 뒷받침되는지 검증합니다.
 
-다음 claim들이 원문에서 뒷받침되는지 **각 claim마다** 검증해라.
+<paper>
+{{paperText}}
+</paper>
+
+<claims>
+{{claimsJson}}
+</claims>
+
+위 `<claims>`의 claim들이 `<paper>`의 원문에서 뒷받침되는지 **각 claim마다** 검증해라.
 
 ## 검증 절차 (각 claim에 대해)
 1. 인용된 sourceSection 근처에서 뒷받침 문장 검색
-2. 없으면 논문 전체에서 검색
+2. 없으면 제공된 발췌 전체에서 검색
 3. 판정: supported / partially_supported / unsupported / contradicted
 
 ## JSON 응답 스키마 (배열, JSON 외 텍스트 금지)
@@ -26,9 +34,3 @@
 - 모든 claim에 대해 응답 (생략 금지)
 
 {{verificationFocus_block}}
-
-## Claims (분석가 출력)
-{{claimsJson}}
-
-## 논문 텍스트
-{{paperText}}
