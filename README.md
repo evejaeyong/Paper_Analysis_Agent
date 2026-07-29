@@ -164,6 +164,25 @@ URL을 주거나 외부 자료가 필요한 요청에서, **`WebFetch`/`WebSearc
 
 ---
 
+## 🧪 Evaluation (평가)
+
+KPAC의 읽기(QA) 에이전트는 데모로 끝나지 않고 **headless 평가 하니스로 측정**됩니다. 핵심 설계: 동일 모델·동일 입력의 단일 호출 베이스라인과 비교해 **에이전트 구조의 효과만 분리 측정**하고, LLM judge는 피평가와 **다른 backend**(gpt-5.5)를 사용하며, judge 자체도 사람 재채점·gold 감사로 검증합니다.
+
+**요약 (QASPER 150문항 + 할루시네이션 4축):**
+
+| 지표 | agent-evidence (KPAC) | single-llm 베이스라인 |
+|---|---|---|
+| QA 정확도 (동일 judge 쌍대 판정) | **92.7%** | 88.7% — 쌍대 6승 0패, p≈0.03 (단일 judge 기준, 교차 judge 확증 예정) |
+| Unanswerable 거절 실패(할루시네이션) | **22%** | 28% |
+| 반사실 수치 치환 — 학습지식 오염 | 0건 | 0건 |
+| 근거 인용 위조 포함 run | 13.3% → **인용 가드 도입 후 0%** (150문항 전수, 인용 705건) | 5.3% |
+
+**평가 → 개선 → 재검증 루프**: 평가에서 근거 인용의 13.3%가 "의역을 원문 인용처럼 제시"하는 위조임을 발견 → 출력 시점 인용 가드(`core/quoteGuard.js`, 원문 대조 + 1회 수선) 도입 → 위조 인용 **22건 → 0건**, 동일 judge 쌍대 판정으로 **정답률 회귀 0건** 확인 ([PR #27](https://github.com/evejaeyong/Paper_Analysis_Agent/pull/27)). 이어서 Anthropic 공식 가이드 기준으로 프롬프트를 교정(문서 상단 배치 + judge few-shot)하고 **150문항 × 3변형을 동일 judge로 쌍대 재평가** — 정확도 유지 + 인용 위조 전수 0% + 베이스라인 대비 쌍대 6:0 확인 ([PR #29](https://github.com/evejaeyong/Paper_Analysis_Agent/pull/29), `eval/results/prompt_v2_ab.md`).
+
+방법론·전체 결과·한계(표본 크기, 단일 도메인, judge 검증 상태)·재현 명령은 **[eval/README.md](./eval/README.md)** 참고. 평가는 계속 업데이트됩니다 (다음: verifier 왜곡 claim 검출 평가, 작성팀 기계 채점).
+
+---
+
 ## 요구사항
 
 최소 백엔드 CLI **하나 이상**이 설치 + 로그인된 상태여야 합니다(둘 다 있으면 역할별로 선택 가능).
@@ -320,6 +339,7 @@ kpac/
 │   └── synctex.js           #   SyncTeX 역방향 조회(PDF→.tex)
 ├── utils/                  # parsePdf, chunker, bm25 (LLM-free)
 ├── prompts/                # 에이전트 프롬프트 템플릿 (.md) — 분석팀 + 작성팀
+├── eval/                   # 평가 하니스 — QA 정확도 + 할루시네이션 4축 (eval/README.md)
 ├── scripts/                # 기능 검증 스크립트 (verify-*.mjs)
 ├── public/                 # 프론트엔드 (HTML/CSS/JS)
 │   ├── pdfViewer.js         #   PDF.js 제어형 뷰어 + 인용 하이라이트 + SyncTeX 더블클릭

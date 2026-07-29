@@ -1,5 +1,10 @@
 node_modules/
-data/
+# 루트 런타임 데이터 전용
+/data/
+
+# 평가 하니스 — 대용량 로컬 산출물만 제외 (하니스 코드·결과 문서는 커밋)
+eval/runs/
+eval/data/
 dist-installers/
 dist/
 *.log

@@ -1,0 +1,242 @@
+{
+  "q0009:before": {
+    "verdict": "CORRECT",
+    "reason": "시스템 답변은 규칙 기반 베이스라인(정규표현식+사전), CRF(sklearn-crfsuite), spaCy NER 모델을 모두 포함하며, 이는 두 번째 허용 gold 주석과 사실적으로 일치합니다.",
+    "judge": "claude/claude-sonnet-4-6",
+    "duration_ms": 5686
+  },
+  "q0009:after": {
+    "verdict": "CORRECT",
+    "reason": "시스템 답변은 gold에서 요구하는 NER model(spaCy), CRF classifier(sklearn-crfsuite), 규칙 기반 Baseline(정규표현식+사전)을 모두 포함하며, 추가 정보가 있어도 핵심 사실이 일치합니다.",
+    "judge": "claude/claude-sonnet-4-6",
+    "duration_ms": 5265
+  },
+  "q0027:before": {
+    "verdict": "CORRECT",
+    "reason": "시스템 답변은 PubMed+PMC와 CORD-19 모두를 언급하며, 허용된 두 번째 gold 주석(PubMed+PMC and/or CORD-19)과 사실적으로 일치합니다.",
+    "judge": "claude/claude-sonnet-4-6",
+    "duration_ms": 4363
+  },
+  "q0027:after": {
+    "verdict": "CORRECT",
+    "reason": "시스템 답변은 허용되는 gold 주석 중 두 번째 항목(PubMed+PMC and/or CORD-19)과 정확히 일치하는 사실을 제시하고 있습니다.",
+    "judge": "claude/claude-sonnet-4-6",
+    "duration_ms": 4274
+  },
+  "q0055:before": {
+    "verdict": "CORRECT",
+    "reason": "시스템 답변은 gold의 핵심 정의(\"두 단어 모두와 함께 나타나는 다른 단어들의 빈도\")를 정확히 인용하고 있으며, 추가 설명이 포함되어 있더라도 질문의 핵심에 대한 답이 gold와 일치합니다.",
+    "judge": "claude/claude-sonnet-4-6",
+    "duration_ms": 6108
+  },
+  "q0055:after": {
+    "verdict": "CORRECT",
+    "reason": "시스템 답변은 gold 정답의 핵심 표현(\"frequencies of the other words which occur with both of them, i.e., second order co–occurrences\")을 문서에서 직접 인용하며 정확히 설명하고 있습니다.",
+    "judge": "claude/claude-sonnet-4-6",
+    "duration_ms": 5802
+  },
+  "q0056:before": {
+    "verdict": "CORRECT",
+    "reason": "시스템 답변은 허용된 gold 주석 중 하나인 \"Word-level Memory Neural Networks (MemNNs) proposed in Bordes et al. (2015)\"와 사실적으로 일치하는 MemNNs를 baseline으로 언급하고 있으며, word-level 모델이 ablation 비교에 사용됨을 정확히 설명하고 있습니다.",
+    "judge": "claude/claude-sonnet-4-6",
+    "duration_ms": 5379
+  },
+  "q0056:after": {
+    "verdict": "CORRECT",
+    "reason": "시스템 답변은 허용된 두 번째 gold 주석과 일치하게 MemNNs(Bordes et al. 제안)를 word-level baseline으로 명확히 식별하고 있습니다.",
+    "judge": "claude/claude-sonnet-4-6",
+    "duration_ms": 4510
+  },
+  "q0060:before": {
+    "verdict": "CORRECT",
+    "reason": "시스템 답변은 세 과제의 베이스라인으로 Transformer architecture, Kaldi, clustergen statistical speech synthesizer를 모두 정확히 언급하고 있어 gold 정답과 사실적으로 일치합니다.",
+    "judge": "claude/claude-sonnet-4-6",
+    "duration_ms": 4817
+  },
+  "q0060:after": {
+    "verdict": "CORRECT",
+    "reason": "시스템 답변은 세 NLP 태스크의 베이스라인 모델로 clustergen 통계 음성 합성기, Kaldi, Transformer 아키텍처를 정확히 명시하고 있어 gold 정답과 사실적으로 일치합니다.",
+    "judge": "claude/claude-sonnet-4-6",
+    "duration_ms": 4756
+  },
+  "q0075:before": {
+    "verdict": "CORRECT",
+    "reason": "시스템 답변은 Exact Match(EM)과 Macro-averaged F1(F1) 두 지표를 명확히 제시하여 gold 정답과 사실적으로 일치합니다.",
+    "judge": "claude/claude-sonnet-4-6",
+    "duration_ms": 4052
+  },
+  "q0075:after": {
+    "verdict": "CORRECT",
+    "reason": "시스템 답변은 gold 정답과 동일하게 Exact Match(EM)와 Macro-averaged F1(F1)을 평가 지표로 명확히 제시하고 있습니다.",
+    "judge": "claude/claude-sonnet-4-6",
+    "duration_ms": 4214
+  },
+  "q0078:before": {
+    "verdict": "CORRECT",
+    "reason": "시스템 답변은 self-coverage, opponent-coverage, 그리고 discussion points 채택 수를 모두 언급하며 gold 정답의 핵심 요소와 사실적으로 일치합니다.",
+    "judge": "claude/claude-sonnet-4-6",
+    "duration_ms": 5864
+  },
+  "q0078:after": {
+    "verdict": "CORRECT",
+    "reason": "시스템 답변은 self-coverage, opponent-coverage, 그리고 discussion points 채택 수를 언급하고 있어 gold 정답의 핵심 요소와 사실적으로 일치합니다.",
+    "judge": "claude/claude-sonnet-4-6",
+    "duration_ms": 4330
+  },
+  "q0082:before": {
+    "verdict": "CORRECT",
+    "reason": "시스템 답변은 gold 정답의 핵심 4가지 임베딩(Bernoulli embeddings, CBOW, PV-DM, GloVe)을 모두 정확히 포함하고 있습니다.",
+    "judge": "claude/claude-sonnet-4-6",
+    "duration_ms": 4263
+  },
+  "q0082:after": {
+    "verdict": "CORRECT",
+    "reason": "시스템 답변은 gold 정답의 핵심 요소인 Bernoulli embeddings(b-emb), CBOW, PV-DM, GloVe 4가지를 모두 정확히 포함하고 있습니다.",
+    "judge": "claude/claude-sonnet-4-6",
+    "duration_ms": 7332
+  },
+  "q0083:before": {
+    "verdict": "CORRECT",
+    "reason": "시스템 답변은 BLEU, NIST, METEOR, ROUGE-L, CIDEr 등 자동 평가 지표와 인간 평가(최소 편집 평가, 제품 준비성 평가), WER, 사실 오류 유형, 유창성, 뉴스 기관 제품 사용 적합성 등 gold 정답의 핵심 요소를 모두 포함하고 있습니다.",
+    "judge": "claude/claude-sonnet-4-6",
+    "duration_ms": 5179
+  },
+  "q0083:after": {
+    "verdict": "CORRECT",
+    "reason": "시스템 답변은 BLEU, NIST, METEOR, ROUGE-L, CIDEr, WER, 최소 편집 평가, 사실 정확성, 유창성, 제품 준비도 등 gold의 핵심 평가 지표와 기준을 모두 포함하고 있습니다.",
+    "judge": "claude/claude-sonnet-4-6",
+    "duration_ms": 4681
+  },
+  "q0088:before": {
+    "verdict": "INCORRECT",
+    "reason": "시스템 답변은 node2vec의 2차 편향 랜덤워크로 체인을 선택한다고 설명하지만, gold 정답은 딥 뉴럴 네트워크를 이용한 언어 모델링으로 Dolores 임베딩을 학습한다는 내용으로 사실이 일치하지 않습니다.",
+    "judge": "claude/claude-sonnet-4-6",
+    "duration_ms": 5228
+  },
+  "q0088:after": {
+    "verdict": "INCORRECT",
+    "reason": "시스템 답변은 node2vec 기반 랜덤워크 생성 방식을 설명하지만, gold 정답인 \"deep neural networks를 이용한 언어 모델링으로 Dolores 임베딩을 학습\"하는 내용을 제시하지 않았습니다.",
+    "judge": "claude/claude-sonnet-4-6",
+    "duration_ms": 4563
+  },
+  "q0091:before": {
+    "verdict": "CORRECT",
+    "reason": "시스템 답변은 Doc2Vec (PV-DBOW)을 텍스트 임베딩 방법으로 명확히 제시하며, 이는 gold 정답 및 허용된 주석과 일치합니다.",
+    "judge": "claude/claude-sonnet-4-6",
+    "duration_ms": 7129
+  },
+  "q0091:after": {
+    "verdict": "CORRECT",
+    "reason": "시스템 답변은 Doc2Vec(PV-DBOW)을 핵심 텍스트 임베딩 방법론으로 명확히 식별하여 허용된 gold 주석과 사실적으로 일치합니다.",
+    "judge": "claude/claude-sonnet-4-6",
+    "duration_ms": 4232
+  },
+  "q0097:before": {
+    "verdict": "INCORRECT",
+    "reason": "시스템 답변은 M2M Transformer 모델과 back-translation만을 baseline으로 제시했지만, gold 정답은 pivot-based translation, phrase table induction, RNMT, Transformer, bi-directional model, M2M model, back-translation 등 7가지 baseline을 포함하고 있어 핵심 요소들이 누락되었습니다.",
+    "judge": "claude/claude-sonnet-4-6",
+    "duration_ms": 5722
+  },
+  "q0097:after": {
+    "verdict": "INCORRECT",
+    "reason": "시스템 답변은 해당 논문 내의 특정 weak/strong baseline만 언급했으나, gold 정답은 pivot 기반 번역, 구문 테이블 귀납, RNMT, Transformer, 양방향 모델, M2M 모델, 역번역 등 7가지 baseline 방법을 열거하고 있어 핵심 요소들이 대부분 누락되어 있다.",
+    "judge": "claude/claude-sonnet-4-6",
+    "duration_ms": 9767
+  },
+  "q0100:before": {
+    "verdict": "CORRECT",
+    "reason": "시스템 답변은 라트비아어 기준으로 이전 모델 대비 약 13~14배 크다고 명시하여 gold 정답인 \"14배\"와 사실적으로 일치합니다.",
+    "judge": "claude/claude-sonnet-4-6",
+    "duration_ms": 5636
+  },
+  "q0100:after": {
+    "verdict": "CORRECT",
+    "reason": "시스템 답변은 약 13~14배 더 크다고 제시하며, 이는 gold 정답인 \"14배\"와 사실적으로 일치합니다.",
+    "judge": "claude/claude-sonnet-4-6",
+    "duration_ms": 4515
+  },
+  "q0116:before": {
+    "verdict": "CORRECT",
+    "reason": "시스템 답변은 AEP의 두 베이스라인(B1: salience 기반, B2: 제목 등장 여부)과 ASP의 두 베이스라인(S1: 최고 어휘 유사도, S2: 최빈 섹션)을 모두 정확히 설명하여 gold 정답과 사실적으로 일치합니다.",
+    "judge": "claude/claude-sonnet-4-6",
+    "duration_ms": 5303
+  },
+  "q0116:after": {
+    "verdict": "CORRECT",
+    "reason": "시스템 답변은 AEP와 ASP 각각에 대해 gold 정답 및 허용 주석과 일치하는 baseline을 정확히 서술하고 있습니다.",
+    "judge": "claude/claude-sonnet-4-6",
+    "duration_ms": 3939
+  },
+  "q0127:before": {
+    "verdict": "INCORRECT",
+    "reason": "시스템 답변은 비아이러니↔아이러니 변환 실험에 초점을 맞추고 있으나, gold 정답의 핵심 요소인 Irony Classifier, Sentiment Classifier for Irony, Sentiment Classifier for Non-irony 실험들을 누락하였다.",
+    "judge": "claude/claude-sonnet-4-6",
+    "duration_ms": 6065
+  },
+  "q0127:after": {
+    "verdict": "INCORRECT",
+    "reason": "시스템 답변은 주요 실험으로 변환 실험(non-ironic↔ironic)만 강조하고, gold에 명시된 핵심 실험인 Irony Classifier, Sentiment Classifier for Irony, Sentiment Classifier for Non-irony를 \"모델 구성요소 학습\"으로 부수적으로 처리하여 gold의 핵심 요소를 누락했습니다.",
+    "judge": "claude/claude-sonnet-4-6",
+    "duration_ms": 7240
+  },
+  "q0134:before": {
+    "verdict": "CORRECT",
+    "reason": "시스템 답변은 gold 정답인 \"labeled features\"를 핵심 배경 지식으로 명확히 포함하고 있으며, 추가 정보(neutral features, class distribution)는 부연 설명에 해당합니다.",
+    "judge": "claude/claude-sonnet-4-6",
+    "duration_ms": 5092
+  },
+  "q0134:after": {
+    "verdict": "CORRECT",
+    "reason": "시스템 답변은 핵심 배경 지식으로 \"레이블된 특징(labeled features)\"을 명확히 제시하며 gold 정답과 사실적으로 일치합니다.",
+    "judge": "claude/claude-sonnet-4-6",
+    "duration_ms": 4230
+  },
+  "q0140:before": {
+    "verdict": "CORRECT",
+    "reason": "시스템 답변은 gold 정답인 \"항상 YES라고 답하는 것(batch 2 and 3)\"을 명확히 포함하고 있으며 관련 인용문도 제시했습니다.",
+    "judge": "claude/claude-sonnet-4-6",
+    "duration_ms": 5071
+  },
+  "q0140:after": {
+    "verdict": "CORRECT",
+    "reason": "시스템 답변은 gold 정답인 \"answering always YES (in batch 2 and 3)\"를 명시적으로 포함하고 있으며, 해당 근거 문장도 정확히 인용하였습니다.",
+    "judge": "claude/claude-sonnet-4-6",
+    "duration_ms": 4418
+  },
+  "q0141:before": {
+    "verdict": "CORRECT",
+    "reason": "시스템 답변은 word importance(Attribution/IG 기반)가 낮은 단어를 미번역으로 판정하며 사람 라벨링과 비교한다는 gold의 핵심 사실을 모두 포함합니다.",
+    "judge": "claude/claude-sonnet-4-6",
+    "duration_ms": 5641
+  },
+  "q0141:after": {
+    "verdict": "CORRECT",
+    "reason": "시스템 답변은 Attribution(IG)으로 계산한 낮은 단어 중요도 점수를 사용해 under-translated 단어를 탐지하고, 사람이 라벨링한 정답과 비교해 정확도를 측정한다는 gold의 핵심 내용을 정확히 포함하고 있습니다.",
+    "judge": "claude/claude-sonnet-4-6",
+    "duration_ms": 4915
+  },
+  "q0146:before": {
+    "verdict": "CORRECT",
+    "reason": "시스템 답변은 gold 정답과 동일하게 적대적 데이터셋(AddSent, AddOneSent)에서 모델을 평가하여 노이즈 강건성을 검증한다고 정확히 설명하고 있습니다.",
+    "judge": "claude/claude-sonnet-4-6",
+    "duration_ms": 5130
+  },
+  "q0146:after": {
+    "verdict": "CORRECT",
+    "reason": "시스템 답변은 gold 정답과 동일하게 AddSent·AddOneSent 적대적 세트에서 오해 유발 문장에 대한 모델 평가를 통해 노이즈 강건성을 검증한다고 정확히 설명하고 있습니다.",
+    "judge": "claude/claude-sonnet-4-6",
+    "duration_ms": 4443
+  },
+  "q0147:before": {
+    "verdict": "CORRECT",
+    "reason": "시스템 답변은 gold에서 요구하는 SVM, random forest, extra tree, naive bayes classifier 네 가지 분류기를 모두 정확히 포함하고 있습니다.",
+    "judge": "claude/claude-sonnet-4-6",
+    "duration_ms": 5013
+  },
+  "q0147:after": {
+    "verdict": "CORRECT",
+    "reason": "시스템 답변은 보충 설명에서 SVM, random forest, extra tree, naive bayes classifier를 명시적으로 언급하여 gold 정답의 핵심 내용을 포함하고 있습니다.",
+    "judge": "claude/claude-sonnet-4-6",
+    "duration_ms": 5396
+  }
+}
