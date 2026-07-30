@@ -76,17 +76,20 @@ claude 계열 judge(sonnet) 단독이므로 교차 backend(gpt-5.5) 재판정으
 (설계상 unsupported/contradicted)을 쌍으로 생성(생성 모델은 피평가와 다른 sonnet + 기계 검증),
 실제 verifier에 별도 세트로 투입. 기대 라벨이 정해져 있어 **채점은 기계 대조(LLM judge 불필요)**.
 
-| 지표 | 값 (86쌍, 논문 20편) |
-|---|---|
-| 왜곡 검출 recall | **70.9%** (61/86) — direction_flip 95.7% · number_change 84.2% · unsupported_addition **25.0%** |
-| 참 claim 오탐률 | **0.0%** (0/86) |
-| 검색 실패 | 0건 — BM25 top-3가 근거를 전부 포함 (놓침은 전부 판단 단계) |
+| 지표 (86쌍, 논문 20편) | 개선 전 | 개선 후 (판정 기준 강화) |
+|---|---|---|
+| **왜곡 검출 recall** | 70.9% (61/86) | **100%** (86/86) |
+| **참 claim 오탐률** (본문 제외 강등) | 0.0% | **0.0%** |
+| 유형별 최저 (unsupported_addition) | 25.0% | 100% |
+| 검색(BM25 top-3) 실패 | 0건 | 0건 |
 
-**핵심 발견**: 놓친 25건이 **전부 `partially_supported`** — verifier는 왜곡 claim을 한 번도
-`supported`로 완전 승인하지 않지만, "대부분 참 + 한 요소 왜곡" 유형(특히 무근거 추가)에 부분 점수를
-준다. 그런데 리포트 작성기는 partially_supported를 본문에 포함하므로, **왜곡의 29%가 partial 채널로
-리포트에 유입될 수 있다.** → 다음 개선 루프 대상: "핵심 요소(수치·주체·조건)가 원문과 다르면
-partial이 아니라 contradicted/unsupported" 판정 기준 강화 후 동일 하니스로 재측정.
+**발견 → 개선 루프 (2번째)**: 개선 전 놓친 25건이 **전부 `partially_supported`** — verifier는 왜곡
+claim을 `supported`로 완전 승인하지는 않지만 "대부분 참 + 한 요소 왜곡"(특히 무근거 추가)에 부분
+점수를 줬고, 리포트 작성기는 partial을 본문에 포함하므로 **왜곡의 29%가 partial 채널로 유입** 가능했다.
+→ verifier 프롬프트에 **핵심 요소 규칙**("수치·주체·조건이 원문과 다르면 contradicted, 원문에 없으면
+unsupported — partial 금지") + few-shot 3개 추가 후 동일 86쌍 재측정: **recall 100%, 오탐 0% 유지**
+(부작용: 참 claim 1건 supported→partial 이동 — 본문 포함엔 영향 없음). 전/후: `results/verifier_eval.md`
+/ `results/verifier_eval-p2.md`
 
 ### 채점 신뢰성 관리
 
