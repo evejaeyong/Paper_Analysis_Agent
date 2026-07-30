@@ -1,0 +1,832 @@
+{
+  "papers": {
+    "p01": {
+      "paper_id": "1912.01214",
+      "paper_title": "Cross-lingual Pre-training Based Transfer for Zero-shot Neural Machine Translation",
+      "task_id": "q0001",
+      "claims": [
+        {
+          "id": "p01_1",
+          "source_quote": "Our best approach of MLM+BRLM-SA achieves the significant superior performance to all baselines in the zero-shot directions, improving by 0.9-4.8 BLEU points over the strong pivoting.",
+          "true_claim": "The best proposed approach, MLM+BRLM-SA, improves zero-shot translation by 0.9 to 4.8 BLEU points over the pivoting baseline on the Europarl dataset.",
+          "perturbed_claim": "The best proposed approach, MLM+BRLM-SA, improves zero-shot translation by 2.0 to 6.5 BLEU points over the pivoting baseline on the Europarl dataset.",
+          "perturbation_type": "number_change",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p01_2",
+          "source_quote": "MLM+BRLM-SA performs the best, and is better than MLM+BRLM-HA indicating that soft alignment is helpful than hard alignment for the cross-lingual pretraining.",
+          "true_claim": "MLM+BRLM-SA outperforms MLM+BRLM-HA, indicating that soft alignment is more beneficial than hard alignment for cross-lingual pretraining.",
+          "perturbed_claim": "MLM+BRLM-HA outperforms MLM+BRLM-SA, indicating that hard alignment is more beneficial than soft alignment for cross-lingual pretraining.",
+          "perturbation_type": "direction_flip",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p01_4",
+          "source_quote": "Freezing the first four layers of the transformer shows the best performance and keeps the balance between pre-training and fine-tuning.",
+          "true_claim": "Freezing the first four transformer layers during transfer training yields the best performance by balancing pre-training knowledge retention and fine-tuning adaptation.",
+          "perturbed_claim": "Freezing the first four layers of the transformer shows the best performance on the Europarl dataset, keeping the balance between pre-training and fine-tuning.",
+          "perturbation_type": "condition_change",
+          "expected_perturbed_status": "unsupported"
+        }
+      ]
+    },
+    "p02": {
+      "paper_id": "1810.08699",
+      "paper_title": "pioNER: Datasets and Baselines for Armenian Named Entity Recognition",
+      "task_id": "q0002",
+      "claims": [
+        {
+          "id": "p02_1",
+          "source_quote": "we generated 7455 annotated sentences with 163247 tokens based on 20 February 2018 dump of Armenian Wikipedia",
+          "true_claim": "The silver-standard training corpus was generated from a February 2018 Armenian Wikipedia dump and contains 7455 annotated sentences with 163247 tokens.",
+          "perturbed_claim": "The silver-standard training corpus was generated from a February 2018 Armenian Wikipedia dump and contains 9500 annotated sentences with 163247 tokens.",
+          "perturbation_type": "number_change",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p02_2",
+          "source_quote": "we release 50-, 100-, 200- and 300-dimensional word vectors for Armenian with a vocabulary size of 400000",
+          "true_claim": "The released Armenian GloVe word embeddings come in four dimensionalities (50, 100, 200, and 300) and cover a vocabulary of 400,000 words.",
+          "perturbed_claim": "The released Armenian GloVe word embeddings come in four dimensionalities (50, 100, 200, and 300) and cover a vocabulary of 200,000 words.",
+          "perturbation_type": "number_change",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p02_3",
+          "source_quote": "both deep learning models outperformed the feature-based Stanford recognizer in recall, the latter however demonstrated noticeably higher precision",
+          "true_claim": "The two deep learning models surpassed Stanford NER in recall, while Stanford NER showed noticeably higher precision than the deep learning models.",
+          "perturbed_claim": "The two deep learning models surpassed Stanford NER in precision, while Stanford NER showed noticeably higher recall than the deep learning models.",
+          "perturbation_type": "direction_flip",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p02_4",
+          "source_quote": "The highest F1 score was achieved by the recurrent model using a batch size of 8 and Adam optimizer with an initial learning rate of 0.001",
+          "true_claim": "The best overall F1 score was obtained by the recurrent model configured with a batch size of 8 and the Adam optimizer at an initial learning rate of 0.001.",
+          "perturbed_claim": "The best overall F1 score was obtained by spaCy 2.0 configured with a batch size of 8 and the Adam optimizer at an initial learning rate of 0.001.",
+          "perturbation_type": "entity_swap",
+          "expected_perturbed_status": "contradicted"
+        }
+      ]
+    },
+    "p03": {
+      "paper_id": "1609.00425",
+      "paper_title": "Identifying Dogmatism in Social Media: Signals and Models",
+      "task_id": "q0003",
+      "claims": [
+        {
+          "id": "p03_1",
+          "source_quote": "we have randomly sampled 1000 posts each from the subreddits politics, business, science, and AskReddit, and 1000 additional posts from the Reddit frontpage. All posts in our sample appeared between January 2007 and March 2015, and to control for length effects, contain between 300 and 400 characters. This results in a total training dataset of 5000 posts.",
+          "true_claim": "The training dataset consists of 5,000 Reddit posts sampled from four subreddits and the frontpage, each containing between 300 and 400 characters, collected from January 2007 to March 2015.",
+          "perturbed_claim": "The training dataset consists of 5,000 Reddit posts sampled from five subreddits and the frontpage, each containing between 300 and 400 characters, collected from January 2007 to March 2015.",
+          "perturbation_type": "number_change",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p03_2",
+          "source_quote": "BOW shows an AUC of 0.853 within Reddit and 0.776 on the held out New York Times comments. The linguistic features boost classification results within Reddit (0.881) and on the held out New York Times comments (0.791).",
+          "true_claim": "Adding linguistic features to the bag-of-words model improves AUC from 0.853 to 0.881 within Reddit and from 0.776 to 0.791 on the New York Times held-out set.",
+          "perturbed_claim": "Adding linguistic features to the bag-of-words model improves AUC from 0.853 to 0.881 within Reddit and from 0.776 to 0.791 on a held-out set of Washington Post comments.",
+          "perturbation_type": "condition_change",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p03_3",
+          "source_quote": "certainty is more associated with dogmatic comments (1.52 odds), while tentativeness is more associated with the absence of dogmatism (0.88 odds).",
+          "true_claim": "Certainty language is positively associated with dogmatic comments at 1.52 odds, whereas tentative language is negatively associated with dogmatism at 0.88 odds.",
+          "perturbed_claim": "Tentativeness language is positively associated with dogmatic comments at 1.52 odds, whereas certainty language is negatively associated with dogmatism at 0.88 odds.",
+          "perturbation_type": "direction_flip",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p03_4",
+          "source_quote": "negative emotion (2.09 odds) and swearing (3.80 odds) are useful positive signals of dogmatism, while positive emotion shows no significant relationship.",
+          "true_claim": "Negative emotion and swearing are both positive predictors of dogmatism, with swearing showing a stronger association (3.80 odds) than negative emotion (2.09 odds), while positive emotion has no significant relationship with dogmatism.",
+          "perturbed_claim": "Negative emotion and swearing are both positive predictors of dogmatism, with swearing showing a stronger association (3.80 odds) than negative emotion (2.09 odds), and positive emotion also showing a significant positive relationship with dogmatism.",
+          "perturbation_type": "unsupported_addition",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p03_5",
+          "source_quote": "Activity and focus are positively associated with dogmatism, while breadth and engagement are negatively associated",
+          "true_claim": "Among the four behavioral features examined, activity and focus predict higher dogmatism, while breadth and engagement predict lower dogmatism.",
+          "perturbed_claim": "Among the four behavioral features examined, breadth and engagement predict higher dogmatism, while activity and focus predict lower dogmatism.",
+          "perturbation_type": "direction_flip",
+          "expected_perturbed_status": "contradicted"
+        }
+      ]
+    },
+    "p04": {
+      "paper_id": "1801.05147",
+      "paper_title": "Adversarial Learning for Chinese NER from Crowd Annotations",
+      "task_id": "q0004",
+      "claims": [
+        {
+          "id": "p04_1",
+          "source_quote": "Compared with CRF, LSTM-CRF achieves much better performances on all the three data, showing +6.12 F1 improvement on DL-PS, +4.51 on EC-MT, and +9.19 on EC-UQ.",
+          "true_claim": "LSTM-CRF outperforms CRF by 6.12 F1 on DL-PS, 4.51 F1 on EC-MT, and 9.19 F1 on EC-UQ.",
+          "perturbed_claim": "LSTM-CRF outperforms CRF by 6.12 F1 on DL-PS, 4.51 F1 on EC-MT, and 7.19 F1 on EC-UQ.",
+          "perturbation_type": "number_change",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p04_2",
+          "source_quote": "ALCrowd shows its advantage with +1.08 F1 improvements on DL-PS, +1.24 on EC-MT, and +2.38 on EC-UQ, respectively",
+          "true_claim": "ALCrowd improves over the LSTM-CRF baseline by 1.08 F1 on DL-PS, 1.24 F1 on EC-MT, and 2.38 F1 on EC-UQ.",
+          "perturbed_claim": "LSTM-Crowd improves over the LSTM-CRF baseline by 1.08 F1 on DL-PS, 1.24 F1 on EC-MT, and 2.38 F1 on EC-UQ.",
+          "perturbation_type": "entity_swap",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p04_3",
+          "source_quote": "CRF-VT and LSTM-CRF-VT trained on the voted version perform worse in the DL-PS dataset",
+          "true_claim": "Models trained on majority-voted data perform worse than those trained on original crowd annotations on the DL-PS dataset.",
+          "perturbed_claim": "Models trained on majority-voted data perform better than those trained on original crowd annotations on the DL-PS dataset.",
+          "perturbation_type": "direction_flip",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p04_4",
+          "source_quote": "we randomly select 20K sentences as our pool and hire 43 students to annotate the sentences. We ask the annotators to label two types of entities: Person-Name and Song-Name. The annotators label the sentences independently. In particular, each sentence is assigned to three annotators for this data.",
+          "true_claim": "In the Dialog domain dataset, each sentence was independently annotated by three out of 43 student annotators for two entity types: Person-Name and Song-Name.",
+          "perturbed_claim": "In the E-commerce domain dataset, each sentence was independently annotated by three out of 43 student annotators for two entity types: Person-Name and Song-Name.",
+          "perturbation_type": "condition_change",
+          "expected_perturbed_status": "contradicted"
+        }
+      ]
+    },
+    "p05": {
+      "paper_id": "1811.00383",
+      "paper_title": "Addressing word-order Divergence in Multilingual Neural Machine Translation for extremely Low Resource Languages",
+      "task_id": "q0005",
+      "claims": [
+        {
+          "id": "p05_1",
+          "source_quote": "We use an encoder which contains two layers of bidirectional LSTMs with 500 neurons each. The decoder contains two LSTM layers with 500 neurons each.",
+          "true_claim": "The NMT model uses an encoder with two bidirectional LSTM layers and a decoder with two LSTM layers, each containing 500 neurons.",
+          "perturbed_claim": "The NMT model uses an encoder with three bidirectional LSTM layers and a decoder with two LSTM layers, each containing 500 neurons.",
+          "perturbation_type": "number_change",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p05_2",
+          "source_quote": "We observe larger gains when generic pre-ordering rules are used compared to the Hindi-tuned pre-ordering rules.",
+          "true_claim": "Generic pre-ordering rules yield larger translation quality gains than Hindi-tuned pre-ordering rules.",
+          "perturbed_claim": "Hindi-tuned pre-ordering rules yield larger translation quality gains than generic pre-ordering rules.",
+          "perturbation_type": "direction_flip",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p05_5",
+          "source_quote": "pre-ordering significantly reducing the number of UNK tokens (placeholder for unknown words) in the test output",
+          "true_claim": "Applying pre-ordering to the assisting language significantly reduces the number of unknown token outputs generated during translation.",
+          "perturbed_claim": "Applying pre-ordering to the assisting language significantly reduces the number of unknown token outputs and also eliminates out-of-vocabulary errors in the source vocabulary.",
+          "perturbation_type": "unsupported_addition",
+          "expected_perturbed_status": "unsupported"
+        }
+      ]
+    },
+    "p06": {
+      "paper_id": "1909.09067",
+      "paper_title": "A Corpus for Automatic Readability Assessment and Text Simplification of German",
+      "task_id": "q0006",
+      "claims": [
+        {
+          "id": "p06_1",
+          "source_quote": "the corpus is compiled from web sources and consists of approximately 211,000 sentences",
+          "true_claim": "The German corpus introduced in this paper was compiled from web sources and contains approximately 211,000 sentences.",
+          "perturbed_claim": "The German corpus introduced in this paper was compiled from web sources and contains approximately 350,000 sentences.",
+          "perturbation_type": "number_change",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p06_2",
+          "source_quote": "The vocabulary is smaller by 51% (33,384 vs. 16,352 types), which is comparable to the rate of reduction reported in Section SECREF2 for the Newsela Corpus (50.8%)",
+          "true_claim": "The simplified German texts in the parallel data have a vocabulary that is 51% smaller than their German counterparts, a reduction comparable to the 50.8% reduction observed in the Newsela Corpus.",
+          "perturbed_claim": "The simplified German texts in the parallel data have a vocabulary that is 51% larger than their German counterparts, a reduction comparable to the 50.8% reduction observed in the Newsela Corpus.",
+          "perturbation_type": "direction_flip",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p06_3",
+          "source_quote": "The most well-known example is the Parallel Wikipedia Simplification Corpus (PWKP) compiled from parallel articles of the English Wikipedia and Simple English Wikipedia BIBREF13 and consisting of around 108,000 sentence pairs",
+          "true_claim": "The PWKP corpus was compiled from parallel articles of the English Wikipedia and Simple English Wikipedia and consists of around 108,000 sentence pairs.",
+          "perturbed_claim": "The Newsela Corpus was compiled from parallel articles of the English Wikipedia and Simple English Wikipedia and consists of around 108,000 sentence pairs.",
+          "perturbation_type": "entity_swap",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p06_4",
+          "source_quote": "52 websites and 233 PDFs (amounting to approximately 26,000 sentences) have an explicit language level label",
+          "true_claim": "In the corpus, 52 websites and 233 PDFs, amounting to approximately 26,000 sentences, carry an explicit language level label.",
+          "perturbed_claim": "In the corpus, 52 websites and 233 PDFs, amounting to approximately 26,000 sentences, carry an explicit language level label verified by human annotators.",
+          "perturbation_type": "unsupported_addition",
+          "expected_perturbed_status": "unsupported"
+        },
+        {
+          "id": "p06_5",
+          "source_quote": "klaper-ebling-volk-2013 created the first parallel corpus for German/simplified German, consisting of 256 parallel texts downloaded from the web (approximately 70,000 tokens)",
+          "true_claim": "The first parallel corpus for German and simplified German, created by klaper-ebling-volk-2013, consisted of 256 parallel texts and approximately 70,000 tokens.",
+          "perturbed_claim": "The first parallel corpus for German and simplified German, created by klaper-ebling-volk-2013, consisted of 256 parallel texts and approximately 70,000 sentence pairs.",
+          "perturbation_type": "condition_change",
+          "expected_perturbed_status": "contradicted"
+        }
+      ]
+    },
+    "p07": {
+      "paper_id": "1704.06194",
+      "paper_title": "Improved Neural Relation Detection for Knowledge Base Question Answering",
+      "task_id": "q0007",
+      "claims": [
+        {
+          "id": "p07_1",
+          "source_quote": "the SimpleQuestions BIBREF2 data set has 14% of the golden test relations not observed in golden training tuples",
+          "true_claim": "In the SimpleQuestions dataset, 14% of the golden test relations are not seen in the golden training tuples.",
+          "perturbed_claim": "In the SimpleQuestions dataset, 28% of the golden test relations are not seen in the golden training tuples.",
+          "perturbation_type": "number_change",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p07_2",
+          "source_quote": "Our proposed HR-BiLSTM outperformed the best baselines on both tasks by margins of 2-3%",
+          "true_claim": "HR-BiLSTM outperformed the best baseline models on both SimpleQuestions and WebQSP relation detection tasks by margins of 2-3%.",
+          "perturbed_claim": "HR-BiLSTM underperformed the best baseline models on both SimpleQuestions and WebQSP relation detection tasks by margins of 2-3%.",
+          "perturbation_type": "direction_flip",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p07_3",
+          "source_quote": "Note that using only relation names instead of words results in a weaker baseline BiLSTM model. The model yields a significant performance drop on SimpleQuestions (91.2% to 88.9%).",
+          "true_claim": "Using only relation names instead of words in the baseline BiLSTM causes a significant performance drop on SimpleQuestions from 91.2% to 88.9%.",
+          "perturbed_claim": "Using only relation names instead of words in the baseline BiCNN causes a significant performance drop on SimpleQuestions from 91.2% to 88.9%.",
+          "perturbation_type": "entity_swap",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p07_4",
+          "source_quote": "residual learning significantly helps on WebQSP (80.65% to 82.53%), while it does not help as much on SimpleQuestions",
+          "true_claim": "Residual learning provides a significant improvement on WebQSP, raising accuracy from 80.65% to 82.53%, while its benefit on SimpleQuestions is comparatively smaller.",
+          "perturbed_claim": "Residual learning provides a significant improvement on SimpleQuestions, raising accuracy from 80.65% to 82.53%, while its benefit on WebQSP is comparatively smaller.",
+          "perturbation_type": "condition_change",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p07_5",
+          "source_quote": "our system does not use joint-inference or feature-based re-ranking step, nevertheless it still achieves better or comparable results to the state-of-the-art",
+          "true_claim": "The proposed KBQA system achieves better or comparable results to state-of-the-art without using joint-inference or feature-based re-ranking.",
+          "perturbed_claim": "The proposed KBQA system achieves better or comparable results to state-of-the-art by incorporating a reinforcement learning-based re-ranking step.",
+          "perturbation_type": "unsupported_addition",
+          "expected_perturbed_status": "unsupported"
+        }
+      ]
+    },
+    "p08": {
+      "paper_id": "1909.00512",
+      "paper_title": "How Contextual are Contextualized Word Representations? Comparing the Geometry of BERT, ELMo, and GPT-2 Embeddings",
+      "task_id": "q0008",
+      "claims": [
+        {
+          "id": "p08_1",
+          "source_quote": "in almost all layers of BERT, ELMo and GPT-2, the representations of all words occupy a narrow cone in the vector space",
+          "true_claim": "In nearly all layers of BERT, ELMo, and GPT-2, word representations are anisotropic, occupying a narrow cone in the vector space.",
+          "perturbed_claim": "In nearly all layers of BERT, ELMo, and GPT-2, word representations are isotropic, uniformly distributed across the vector space.",
+          "perturbation_type": "direction_flip",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p08_2",
+          "source_quote": "In no layer of ELMo, BERT, or GPT-2 can more than 5% of the variance in a word's contextualized representations be explained by a static embedding, on average.",
+          "true_claim": "On average, a static embedding can explain no more than 5% of the variance in a word's contextualized representations across all layers of ELMo, BERT, and GPT-2.",
+          "perturbed_claim": "On average, a static embedding can explain no more than 15% of the variance in a word's contextualized representations across all layers of ELMo, BERT, and GPT-2.",
+          "perturbation_type": "number_change",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p08_3",
+          "source_quote": "The best-performing PC static embeddings belong to the first layer of BERT, although those from the other layers of BERT and ELMo also outperform GloVe and FastText on most benchmarks.",
+          "true_claim": "Static embeddings derived from the first principal component of BERT's first layer achieve the best performance among all PC static embeddings, and both BERT and ELMo layers generally outperform GloVe and FastText on most benchmarks.",
+          "perturbed_claim": "Static embeddings derived from the first principal component of GPT-2's first layer achieve the best performance among all PC static embeddings, and both BERT and ELMo layers generally outperform GloVe and FastText on most benchmarks.",
+          "perturbation_type": "entity_swap",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p08_4",
+          "source_quote": "the words with the lowest average self-similarity across ELMo's layers are `and', `of', `'s', `the', and `to'",
+          "true_claim": "In ELMo, stopwords such as 'and', 'of', \"'s\", 'the', and 'to' have the lowest average self-similarity across layers, indicating they are among the most context-specific words.",
+          "perturbed_claim": "In BERT, stopwords such as 'and', 'of', \"'s\", 'the', and 'to' have the lowest average self-similarity across layers, indicating they are among the most context-specific words.",
+          "perturbation_type": "entity_swap",
+          "expected_perturbed_status": "unsupported"
+        },
+        {
+          "id": "p08_5",
+          "source_quote": "Our input data come from the SemEval Semantic Textual Similarity tasks from years 2012 - 2016",
+          "true_claim": "The study uses input sentences drawn from the SemEval Semantic Textual Similarity tasks spanning the years 2012 to 2016.",
+          "perturbed_claim": "The study uses input sentences drawn from the SemEval Semantic Textual Similarity tasks spanning the years 2012 to 2016, and the models were additionally fine-tuned on this data before analysis.",
+          "perturbation_type": "unsupported_addition",
+          "expected_perturbed_status": "unsupported"
+        }
+      ]
+    },
+    "p09": {
+      "paper_id": "2003.03106",
+      "paper_title": "Sensitive Data Detection and Classification in Spanish Clinical Text: Experiments with BERT",
+      "task_id": "q0009",
+      "claims": [
+        {
+          "id": "p09_1",
+          "source_quote": "BERT achieves a precision lower than the rest of the systems (i.e., it makes more false positive predictions); in exchange, it obtains a remarkably higher recall. Noticeably, it reaches a recall of 0.979, improving by more than 4 points the second-best system, spaCy.",
+          "true_claim": "In the NUBes-PHI detection scenario, BERT achieves a recall of 0.979, which is more than 4 points higher than the second-best system, spaCy.",
+          "perturbed_claim": "In the NUBes-PHI detection scenario, BERT achieves a recall of 0.979, which is more than 4 points higher than the second-best system, CRF.",
+          "perturbation_type": "entity_swap",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p09_2",
+          "source_quote": "With 1% of the dataset (230 training instances), the BERT-based model only suffers a striking 7-point F1-score loss, in contrast to the 32 and 39 points lost by the CRF and spaCy models, respectively.",
+          "true_claim": "When trained on only 1% of the NUBes-PHI training data (230 instances), the BERT-based model loses 7 F1-score points, while CRF and spaCy lose 32 and 39 points respectively.",
+          "perturbed_claim": "When trained on only 1% of the NUBes-PHI training data (230 instances), the BERT-based model loses 7 F1-score points, while CRF and spaCy lose 39 and 32 points respectively.",
+          "perturbation_type": "entity_swap",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p09_3",
+          "source_quote": "the BERT-based model falls 0.3 F1-score points behind the shared task winning system, but it would have achieved the second position in the competition with no further refinement.",
+          "true_claim": "On the MEDDOCAN dataset, the BERT-based model scores 0.3 F1-score points below the winning system and would have ranked second among all competitors.",
+          "perturbed_claim": "On the MEDDOCAN dataset, the BERT-based model scores 0.3 F1-score points above the winning system and would have ranked first among all competitors.",
+          "perturbation_type": "direction_flip",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p09_5",
+          "source_quote": "NUBes-PHI consists of 32,055 sentences annotated for 11 different sensitive information categories. Overall, it contains 7,818 annotations. The corpus has been randomly split into train (72%), development (8%) and test (20%) sets.",
+          "true_claim": "The NUBes-PHI corpus contains 32,055 sentences with 7,818 annotations across 11 sensitive information categories, split into train (72%), development (8%), and test (20%) sets.",
+          "perturbed_claim": "The NUBes-PHI corpus contains 32,055 sentences with 7,818 annotations across 11 sensitive information categories, split into train (70%), development (10%), and test (20%) sets.",
+          "perturbation_type": "number_change",
+          "expected_perturbed_status": "contradicted"
+        }
+      ]
+    },
+    "p10": {
+      "paper_id": "1708.01464",
+      "paper_title": "Massively Multilingual Neural Grapheme-to-Phoneme Conversion",
+      "task_id": "q0010",
+      "claims": [
+        {
+          "id": "p10_1",
+          "source_quote": "We show an 11% improvement in phoneme error rate over an approach based on adapting high-resource monolingual g2p models to low-resource languages.",
+          "true_claim": "The proposed multilingual neural g2p system achieves an 11% improvement in phoneme error rate compared to an approach that adapts high-resource monolingual g2p models to low-resource languages.",
+          "perturbed_claim": "The proposed multilingual neural g2p system achieves a 22% improvement in phoneme error rate compared to an approach that adapts high-resource monolingual g2p models to low-resource languages.",
+          "perturbation_type": "number_change",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p10_2",
+          "source_quote": "LangID-High is 15.4 MB, while the combined wFST high resource models are 197.5 MB.",
+          "true_claim": "The LangID-High model is significantly more compact than the combined wFST high resource models, at 15.4 MB versus 197.5 MB.",
+          "perturbed_claim": "The combined wFST high resource models are more compact than the LangID-High model, occupying less storage space overall.",
+          "perturbation_type": "direction_flip",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p10_3",
+          "source_quote": "The best performance came with the version of our model that was trained on data in all available languages, not just the languages it was tested on.",
+          "true_claim": "On the 229-language adapted evaluation, the best-performing version of the proposed model was trained on data from all available languages rather than only those included in the test set.",
+          "perturbed_claim": "On the 229-language adapted evaluation, the best-performing version of the proposed model was trained on data only from the languages it was tested on, rather than all available languages.",
+          "perturbation_type": "direction_flip",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p10_4",
+          "source_quote": "We use the multilingual pronunciation corpus collected by deri2016grapheme for all experiments. This corpus consists of spelling–pronunciation pairs extracted from Wiktionary.",
+          "true_claim": "All experiments in the paper use a multilingual pronunciation corpus consisting of spelling–pronunciation pairs extracted from Wiktionary, which was collected by Deri and Knight.",
+          "perturbed_claim": "All experiments in the paper use a multilingual pronunciation corpus consisting of spelling–pronunciation pairs extracted from the Carnegie Mellon Pronouncing Dictionary, which was collected by Deri and Knight.",
+          "perturbation_type": "entity_swap",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p10_5",
+          "source_quote": "the languages closest to German in the vector space are Luxembourgish, Bavarian, and Yiddish, all close relatives",
+          "true_claim": "In the learned language embedding space, the languages most similar to German are Luxembourgish, Bavarian, and Yiddish, which are all genetically related to German.",
+          "perturbed_claim": "In the learned language embedding space, the languages most similar to German are Luxembourgish, Bavarian, and Yiddish, and the embeddings were additionally validated against typological features from the WALS database.",
+          "perturbation_type": "unsupported_addition",
+          "expected_perturbed_status": "unsupported"
+        }
+      ]
+    },
+    "p11": {
+      "paper_id": "2002.03407",
+      "paper_title": "Abstractive Summarization for Low Resource Data using Domain Transfer and Data Synthesis",
+      "task_id": "q0011",
+      "claims": [
+        {
+          "id": "p11_2",
+          "source_quote": "fine tuning improves R-1, R-2, and R-L for all courses (rows 5, 6, 9 and 17, 18, 21)",
+          "true_claim": "Fine-tuning the PG-net model on student reflection data after pretraining on CNN/DM improves ROUGE-1, ROUGE-2, and ROUGE-L scores across all evaluated courses.",
+          "perturbed_claim": "Fine-tuning the PG-net model on student reflection data after pretraining on CNN/DM decreases ROUGE-1, ROUGE-2, and ROUGE-L scores across all evaluated courses.",
+          "perturbation_type": "direction_flip",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p11_3",
+          "source_quote": "the majority of selected summaries were produced by the tuned model (49% for CS and 41% for Stat2015), compared to (31% for CS and 30.9% for Stat2015) for CNN/DM model",
+          "true_claim": "In human evaluation, the tuned model was preferred by the majority of evaluators, receiving 49% of selections for CS and 41% for Stat2015, outperforming the CNN/DM-only model which received 31% and 30.9% respectively.",
+          "perturbed_claim": "In human evaluation, the CNN/DM-only model was preferred by the majority of evaluators, receiving 49% of selections for CS and 41% for Stat2015, outperforming the tuned model which received 31% and 30.9% respectively.",
+          "perturbation_type": "entity_swap",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p11_4",
+          "source_quote": "Templates are then clustered using k-medoid",
+          "true_claim": "The template clustering module converts templates into BERT embeddings and then clusters them using k-medoid.",
+          "perturbed_claim": "The template clustering module converts templates into BERT embeddings and then clusters them using k-means.",
+          "perturbation_type": "entity_swap",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p11_5",
+          "source_quote": "The language model is a single layer LSTM language model trained on 36K sentences from Wikipedia and fine tuned using student reflections",
+          "true_claim": "The scoring language model used in the synthesis pipeline is a single-layer LSTM trained on 36,000 Wikipedia sentences and subsequently fine-tuned on student reflections.",
+          "perturbed_claim": "The scoring language model used in the synthesis pipeline is a single-layer LSTM trained on 36,000 Wikipedia sentences and subsequently fine-tuned on CNN/DailyMail news articles.",
+          "perturbation_type": "condition_change",
+          "expected_perturbed_status": "contradicted"
+        }
+      ]
+    },
+    "p12": {
+      "paper_id": "1909.11687",
+      "paper_title": "Extreme Language Model Compression with Optimal Subwords and Shared Projections",
+      "task_id": "q0012",
+      "claims": [
+        {
+          "id": "p12_2",
+          "source_quote": "we obtain a vocabulary of 4928 WordPieces, which we use for the student model",
+          "true_claim": "The student model uses a vocabulary of 4928 WordPieces obtained via the same WordPiece algorithm and training corpus as BERT.",
+          "perturbed_claim": "The student model uses a vocabulary of 4928 WordPieces obtained via a different subword tokenization algorithm than the one used by BERT.",
+          "perturbation_type": "condition_change",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p12_3",
+          "source_quote": "93.9% of the WordPieces in the student vocabulary also exist in the teacher vocabulary",
+          "true_claim": "A large majority of student vocabulary tokens (93.9%) are also present in the teacher vocabulary.",
+          "perturbed_claim": "A large majority of teacher vocabulary tokens (93.9%) are also present in the student vocabulary.",
+          "perturbation_type": "direction_flip",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p12_4",
+          "source_quote": "our 192-dimensional models, achieving a higher compression rate than either of the PKD models, perform better than the 3-layer PKD baseline and are competitive with the larger 6-layer baseline on task accuracy while being nearly 5 times as small",
+          "true_claim": "The 192-dimensional student models outperform the 3-layer PKD baseline and are competitive with the 6-layer PKD baseline, while being nearly 5 times smaller in memory footprint.",
+          "perturbed_claim": "The 192-dimensional student models outperform the 3-layer PKD baseline and are competitive with the 6-layer PKD baseline, while being nearly 5 times larger in memory footprint.",
+          "perturbation_type": "direction_flip",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p12_5",
+          "source_quote": "the best 48-dimensional models are in a similar performance bracket as the 3-layer PKD model, a model 25 times larger by memory footprint",
+          "true_claim": "The best 48-dimensional student models achieve performance comparable to the 3-layer PKD model, which is 25 times larger in memory footprint.",
+          "perturbed_claim": "The best 48-dimensional student models achieve performance comparable to the 6-layer PKD model, which is 25 times larger in memory footprint.",
+          "perturbation_type": "entity_swap",
+          "expected_perturbed_status": "contradicted"
+        }
+      ]
+    },
+    "p13": {
+      "paper_id": "1605.06083",
+      "paper_title": "Stereotyping and Bias in the Flickr30K Dataset",
+      "task_id": "q0013",
+      "claims": [
+        {
+          "id": "p13_1",
+          "source_quote": "The Flickr30K dataset BIBREF0 is a collection of over 30,000 images with 5 crowdsourced descriptions each.",
+          "true_claim": "The Flickr30K dataset contains over 30,000 images, each accompanied by five crowdsourced descriptions.",
+          "perturbed_claim": "The Flickr30K dataset contains over 30,000 images, each accompanied by ten crowdsourced descriptions.",
+          "perturbation_type": "number_change",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p13_2",
+          "source_quote": "There are 504 white, 66 asian, and 36 black babies. 73 images do not contain a baby, and 18 images do not fall into any of the other categories.",
+          "true_claim": "Among the manually categorized baby images, white babies were the most numerous at 504, followed by 66 Asian and 36 black babies.",
+          "perturbed_claim": "Among the manually categorized baby images, Asian babies were the most numerous at 504, followed by 66 white and 36 black babies.",
+          "perturbation_type": "entity_swap",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p13_3",
+          "source_quote": "white babies (who get marked in less than 1% of the images) and asian/black babies (who get marked much more often)",
+          "true_claim": "White babies were marked for ethnicity in less than 1% of images, whereas Asian and black babies were marked much more frequently.",
+          "perturbed_claim": "White babies were marked for ethnicity in less than 1% of images, whereas Asian and black babies were marked at a similar rate.",
+          "perturbation_type": "direction_flip",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p13_4",
+          "source_quote": "I applied Louvain clustering BIBREF9 to the coreference graph, resulting in clusters of expressions that refer to similar entities.",
+          "true_claim": "The author applied Louvain clustering to a coreference graph derived from Flickr30K Entities to group expressions referring to similar entities.",
+          "perturbed_claim": "The author applied Louvain clustering to a coreference graph derived from Flickr30K Entities to rank expressions by their frequency of use across descriptions.",
+          "perturbation_type": "unsupported_addition",
+          "expected_perturbed_status": "unsupported"
+        },
+        {
+          "id": "p13_5",
+          "source_quote": "linguistic bias as 'a systematic asymmetry in word choice as a function of the social category to which the target belongs.'",
+          "true_claim": "Linguistic bias is defined as a systematic asymmetry in word choice determined by the social category to which the described target belongs.",
+          "perturbed_claim": "Linguistic bias is defined as a systematic asymmetry in sentence length determined by the social category to which the described target belongs.",
+          "perturbation_type": "condition_change",
+          "expected_perturbed_status": "contradicted"
+        }
+      ]
+    },
+    "p14": {
+      "paper_id": "1804.05918",
+      "paper_title": "Improving Implicit Discourse Relation Classification by Modeling Inter-dependencies of Discourse Units in a Paragraph",
+      "task_id": "q0014",
+      "claims": [
+        {
+          "id": "p14_1",
+          "source_quote": "we experimented with PDTB v2.0 BIBREF7 which is the largest annotated corpus containing 36k discourse relations in 2,159 Wall Street Journal (WSJ) articles",
+          "true_claim": "The PDTB v2.0 corpus contains approximately 36,000 discourse relations drawn from 2,159 Wall Street Journal articles.",
+          "perturbed_claim": "The PDTB v2.0 corpus contains approximately 36,000 discourse relations drawn from 2,500 Wall Street Journal articles.",
+          "perturbation_type": "number_change",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p14_2",
+          "source_quote": "our full paragraph-level neural network model achieves the best macro-average F1-score of 48.82% in predicting implicit discourse relations, which outperforms previous neural tensor network models (e.g., BIBREF18 ) by more than 2 percents and outperforms the best previous system BIBREF19 by 1 percent",
+          "true_claim": "The proposed full paragraph-level model achieves a macro-average F1-score of 48.82% on implicit discourse relation prediction, surpassing the best prior system by approximately 1 percent.",
+          "perturbed_claim": "The proposed full paragraph-level model achieves a macro-average F1-score of 48.82% on implicit discourse relation prediction, underperforming the best prior system by approximately 1 percent.",
+          "perturbation_type": "direction_flip",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p14_3",
+          "source_quote": "the input of the paragraph-level discourse relation prediction model is a sequence of word vectors, one vector per word in the paragraph. In this work, we used the pre-trained 300-dimension Google English word2vec embeddings",
+          "true_claim": "The paragraph-level model uses pre-trained 300-dimensional Google English word2vec embeddings as word vector inputs.",
+          "perturbed_claim": "The paragraph-level model uses pre-trained 300-dimensional GloVe embeddings as word vector inputs.",
+          "perturbation_type": "entity_swap",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p14_4",
+          "source_quote": "compared against the best previous systems, our paragraph-level model with untied parameters in the prediction layer achieves F1-score improvements of 6 points on Comparison and 7 points on Temporal",
+          "true_claim": "In the binary classification setting, the proposed model with untied parameters achieves F1-score improvements of 6 points on Comparison and 7 points on Temporal over the best previous systems.",
+          "perturbed_claim": "In the multi-way classification setting, the proposed model with untied parameters achieves F1-score improvements of 6 points on Comparison and 7 points on Temporal over the best previous systems.",
+          "perturbation_type": "condition_change",
+          "expected_perturbed_status": "contradicted"
+        }
+      ]
+    },
+    "p15": {
+      "paper_id": "1809.04267",
+      "paper_title": "Knowledge Based Machine Reading Comprehension",
+      "task_id": "q0015",
+      "claims": [
+        {
+          "id": "p15_2",
+          "source_quote": "It is clear that KVMemNet achieves better P@1 scores on both dev and test sets than PCNet.",
+          "true_claim": "KVMemNet outperforms PCNet in terms of P@1 scores on both the development and test sets.",
+          "perturbed_claim": "PCNet outperforms KVMemNet in terms of P@1 scores on both the development and test sets.",
+          "perturbation_type": "direction_flip",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p15_3",
+          "source_quote": "on the dev set, we observe that only 69.6% of correct answers can be covered by the set of candidate answers in PCNet",
+          "true_claim": "On the development set, PCNet's candidate answer set covers only 69.6% of the correct answers.",
+          "perturbed_claim": "On the development set, KVMemNet's candidate answer set covers only 69.6% of the correct answers.",
+          "perturbation_type": "entity_swap",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p15_4",
+          "source_quote": "The accuracy of the paraphrasing model on the held-out dataset is 87.36%.",
+          "true_claim": "The paraphrasing model achieves an accuracy of 87.36% on the held-out evaluation dataset.",
+          "perturbed_claim": "The paraphrasing model achieves an accuracy of 87.36% on the Quora question pairs dataset.",
+          "perturbation_type": "condition_change",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p15_5",
+          "source_quote": "combining outcomes with them could generates 1.5% and 0.8% absolute gains, respectively.",
+          "true_claim": "Combining QGNet outputs with PCNet and KVMemNet yields absolute gains of 1.5% and 0.8%, respectively.",
+          "perturbed_claim": "Combining QGNet outputs with PCNet and KVMemNet yields absolute gains of 1.5% and 0.8%, respectively, while also reducing inference latency by half.",
+          "perturbation_type": "unsupported_addition",
+          "expected_perturbed_status": "unsupported"
+        }
+      ]
+    },
+    "p16": {
+      "paper_id": "1901.05287",
+      "paper_title": "Assessing BERT's Syntactic Abilities",
+      "task_id": "q0016",
+      "claims": [
+        {
+          "id": "p16_1",
+          "source_quote": "the BERT model is bi-directional: it is trained to predict the identity of masked words based on both the prefix and suffix surrounding these words",
+          "true_claim": "BERT is a bidirectional model trained to predict masked words using both the preceding and following context.",
+          "perturbed_claim": "BERT is a unidirectional model trained to predict masked words using only the preceding context.",
+          "perturbation_type": "direction_flip",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p16_2",
+          "source_quote": "larger is not necessarily better: the BERT-Base model outperforms the BERT-Large model on many of the syntactic conditions",
+          "true_claim": "The BERT-Base model outperforms the BERT-Large model on many syntactic conditions, showing that a larger model is not always superior.",
+          "perturbed_claim": "The BERT-Large model outperforms the BERT-Base model on many syntactic conditions, confirming that a larger model is generally superior.",
+          "perturbation_type": "direction_flip",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p16_3",
+          "source_quote": "I similarly discard 680 sentences from BIBREF1 where the focus verb or its inflection were one of 108 out-of-vocabulary tokens",
+          "true_claim": "680 sentences from the Linzen et al. dataset were discarded because the focus verb or its inflection matched one of 108 out-of-vocabulary tokens.",
+          "perturbed_claim": "680 sentences from the Gulordava et al. dataset were discarded because the focus verb or its inflection matched one of 108 out-of-vocabulary tokens.",
+          "perturbation_type": "entity_swap",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p16_4",
+          "source_quote": "resulting in 23,368 discarded pairs (out of 152,300)",
+          "true_claim": "23,368 stimulus pairs were discarded out of a total of 152,300 pairs from the Marvin and Linzen dataset.",
+          "perturbed_claim": "23,368 stimulus pairs were discarded out of a total of 680 pairs from the Marvin and Linzen dataset.",
+          "perturbation_type": "number_change",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p16_5",
+          "source_quote": "The BIBREF2 and BIBREF3 conditions rule out the possibility of overly relying on selectional preference cues or memorizing the wikipedia training data, and suggest real syntactic generalization is taking place",
+          "true_claim": "The colorless green ideas and manually constructed stimuli conditions rule out reliance on selectional preference cues or Wikipedia memorization, suggesting genuine syntactic generalization by BERT.",
+          "perturbed_claim": "The colorless green ideas and manually constructed stimuli conditions rule out reliance on selectional preference cues or Wikipedia memorization, and also confirm that BERT explicitly encodes hierarchical phrase structure in its attention heads.",
+          "perturbation_type": "unsupported_addition",
+          "expected_perturbed_status": "unsupported"
+        }
+      ]
+    },
+    "p17": {
+      "paper_id": "1612.06685",
+      "paper_title": "Stateology: State-Level Interactive Charting of Language, Feelings, and Values",
+      "task_id": "q0017",
+      "claims": [
+        {
+          "id": "p17_1",
+          "source_quote": "we identified 197,527 bloggers with state location information. For each of these bloggers, we found their blogs (note that a blogger can have multiple blogs), for a total of 335,698 blogs.",
+          "true_claim": "The dataset contains 197,527 bloggers with state location information, corresponding to a total of 335,698 blogs.",
+          "perturbed_claim": "The dataset contains 197,527 bloggers with state location information, corresponding to a total of 435,698 blogs.",
+          "perturbation_type": "number_change",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p17_2",
+          "source_quote": "the densest state was found to be California with 11,701 users. The second densest is Texas, with 9,252 users, followed by New York, with 9,136. The state with the fewest bloggers is Delaware with 1,217 users.",
+          "true_claim": "California had the highest number of bloggers at 11,701, while Delaware had the fewest bloggers with only 1,217 users.",
+          "perturbed_claim": "California had the highest number of bloggers at 11,701, while Wyoming had the fewest bloggers with only 1,217 users.",
+          "perturbation_type": "entity_swap",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p17_3",
+          "source_quote": "out of 153,209 users who self-reported their gender, only 52,725 are men and 100,484 are women",
+          "true_claim": "Among users who self-reported their gender, women outnumbered men, with 100,484 female bloggers compared to 52,725 male bloggers.",
+          "perturbed_claim": "Among users who self-reported their gender, men outnumbered women, with 100,484 male bloggers compared to 52,725 female bloggers.",
+          "perturbation_type": "direction_flip",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p17_4",
+          "source_quote": "this distribution correlates well with the population of these states, with a Spearman's rank correlation INLINEFORM0 of 0.91 and a p-value INLINEFORM1 0.0001",
+          "true_claim": "The geographic distribution of bloggers across states correlates strongly with state population, with a Spearman's rank correlation of 0.91.",
+          "perturbed_claim": "The geographic distribution of bloggers across states correlates strongly with state population, with a Pearson correlation of 0.91.",
+          "perturbation_type": "entity_swap",
+          "expected_perturbed_status": "contradicted"
+        }
+      ]
+    },
+    "p18": {
+      "paper_id": "1912.04961",
+      "paper_title": "Medication Regimen Extraction From Clinical Conversations",
+      "task_id": "q0018",
+      "claims": [
+        {
+          "id": "p18_1",
+          "source_quote": "Compared to the baseline, our best-performing models improve the dosage and frequency extractions' ROUGE-1 F1 scores from 54.28 and 37.13 to 89.57 and 45.94, respectively.",
+          "true_claim": "The best-performing models improved the baseline ROUGE-1 F1 scores for dosage extraction from 54.28 to 89.57 and for frequency extraction from 37.13 to 45.94.",
+          "perturbed_claim": "The best-performing models improved the baseline ROUGE-1 F1 scores for dosage extraction from 54.28 to 89.57 and for frequency extraction from 37.13 to 62.47.",
+          "perturbation_type": "number_change",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p18_3",
+          "source_quote": "Although in cases without encoder pretraining, ClinicalBERT performed the best in the Frequency extraction task (by a small margin), in general, it does not perform as well as BERT.",
+          "true_claim": "Without encoder pretraining, ClinicalBERT achieved the best frequency extraction performance by a small margin, but generally underperformed compared to BERT.",
+          "perturbed_claim": "Without encoder pretraining, ELMo achieved the best frequency extraction performance by a small margin, but generally underperformed compared to BERT.",
+          "perturbation_type": "entity_swap",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p18_5",
+          "source_quote": "Randomly shuffling the entities increases the number of training MR tags from 8,654 to 11,521.",
+          "true_claim": "Applying random shuffling of entities as a data augmentation technique increased the number of training MR tags from 8,654 to 11,521.",
+          "perturbed_claim": "Applying random shuffling of entities as a data augmentation technique increased the number of training MR tags from 8,654 to 11,521, and this method was also used to augment the summarization pretraining corpus.",
+          "perturbation_type": "unsupported_addition",
+          "expected_perturbed_status": "unsupported"
+        }
+      ]
+    },
+    "p19": {
+      "paper_id": "1910.10781",
+      "paper_title": "Hierarchical Transformers for Long Document Classification",
+      "task_id": "q0019",
+      "claims": [
+        {
+          "id": "p19_1",
+          "source_quote": "Total number of parameters in BERT-Base are 110M and 340M in BERT-Large.",
+          "true_claim": "BERT-Base contains 110 million parameters, while BERT-Large contains 340 million parameters.",
+          "perturbed_claim": "BERT-Base contains 340 million parameters, while BERT-Large contains 110 million parameters.",
+          "perturbation_type": "entity_swap",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p19_2",
+          "source_quote": "ToBERT outperforms RoBERT on Fisher and 20newsgroups dataset by 13.63% and 0.81% respectively.",
+          "true_claim": "ToBERT outperforms RoBERT on the Fisher dataset by 13.63% and on the 20newsgroups dataset by 0.81%.",
+          "perturbed_claim": "ToBERT outperforms RoBERT on the Fisher dataset by 13.63% and on the 20newsgroups dataset by 8.10%.",
+          "perturbation_type": "number_change",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p19_3",
+          "source_quote": "we split document into segments of 200 tokens with a shift of 50 tokens to extract features from BERT model.",
+          "true_claim": "Documents are split into segments of 200 tokens with a 50-token shift to extract BERT features.",
+          "perturbed_claim": "Documents are split into segments of 512 tokens with a 50-token shift to extract BERT features.",
+          "perturbation_type": "number_change",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p19_4",
+          "source_quote": "our result on 20 newsgroups is 0.6% worse than the state-of-the-art.",
+          "true_claim": "The proposed model's result on the 20 newsgroups dataset is 0.6% below the state-of-the-art.",
+          "perturbed_claim": "The proposed model's result on the 20 newsgroups dataset surpasses the state-of-the-art by 0.6%.",
+          "perturbation_type": "direction_flip",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p19_5",
+          "source_quote": "position embeddings did not significantly affect the model performance for Fisher and 20newsgroups, but they helped slightly in CSAT prediction (an absolute improvement of 0.64% F1-score).",
+          "true_claim": "Positional embeddings provided a slight absolute improvement of 0.64% F1-score on the CSAT task but did not significantly affect Fisher and 20newsgroups performance.",
+          "perturbed_claim": "Positional embeddings provided a slight absolute improvement of 0.64% F1-score on the CSAT task and were additionally shown to reduce overfitting on the Fisher dataset during training.",
+          "perturbation_type": "unsupported_addition",
+          "expected_perturbed_status": "unsupported"
+        }
+      ]
+    },
+    "p20": {
+      "paper_id": "1603.09631",
+      "paper_title": "Data Collection for Interactive Learning through the Dialog",
+      "task_id": "q0020",
+      "claims": [
+        {
+          "id": "p20_1",
+          "source_quote": "We collected the dataset with 1900 dialogs and 8533 turns.",
+          "true_claim": "The dataset consists of 1900 dialogs containing a total of 8533 turns.",
+          "perturbed_claim": "The dataset consists of 1900 dialogs containing a total of 5300 turns.",
+          "perturbation_type": "number_change",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p20_2",
+          "source_quote": "351 of all collected dialogs contain correct answer provided by users and 702 dialogs have incorrect answer. In the remaining 847 dialogs users did not want to answer the question.",
+          "true_claim": "Among all collected dialogs, the number of dialogs with incorrect answers is greater than the number with correct answers.",
+          "perturbed_claim": "Among all collected dialogs, the number of dialogs with correct answers is greater than the number with incorrect answers.",
+          "perturbation_type": "direction_flip",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p20_3",
+          "source_quote": "Topics discussed in dialogs are questions randomly chosen from training examples of Simple questions BIBREF7 dataset.",
+          "true_claim": "The questions used as dialog topics were randomly selected from the training split of the SimpleQuestions dataset.",
+          "perturbed_claim": "The questions used as dialog topics were randomly selected from the training split of the Freebase dataset.",
+          "perturbation_type": "entity_swap",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p20_4",
+          "source_quote": "The collected dialogs also contain 1828 paraphrases and 1539 explanations for 1870 questions.",
+          "true_claim": "The dataset includes 1828 paraphrases and 1539 explanations covering 1870 questions.",
+          "perturbed_claim": "The dataset includes 1828 paraphrases and 1539 explanations covering 1870 questions, all of which were automatically generated without human involvement.",
+          "perturbation_type": "unsupported_addition",
+          "expected_perturbed_status": "unsupported"
+        },
+        {
+          "id": "p20_5",
+          "source_quote": "Current approaches BIBREF3 , BIBREF4 can only achieve around 50% accuracy on some question answering datasets.",
+          "true_claim": "Existing question answering approaches achieve approximately 50% accuracy on certain QA datasets.",
+          "perturbed_claim": "Existing question answering approaches achieve approximately 50% accuracy on the SimpleQuestions dataset specifically.",
+          "perturbation_type": "condition_change",
+          "expected_perturbed_status": "unsupported"
+        }
+      ]
+    }
+  }
+}
