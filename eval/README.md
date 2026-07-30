@@ -69,6 +69,25 @@ claude 계열 judge(sonnet) 단독이므로 교차 backend(gpt-5.5) 재판정으
 4. **회귀 검증**: 가드 전/후 출력 40건을 **동일 judge로 쌍대 판정** → 정답률 17/20 → 17/20,
    **회귀 0건** (`results/quote_guard_judge_pairs.md`)
 
+### ④ Verifier 왜곡 claim 검출 — [`results/verifier_eval.md`](results/verifier_eval.md)
+
+분석 파이프라인의 핵심인 verifier(claim 검증)의 정면 평가. gold가 없는 과제라 **정답을 설계로
+주입**: 원문 문장에서 참 claim(설계상 supported)과 핵심 요소 하나만 조작한 왜곡 claim
+(설계상 unsupported/contradicted)을 쌍으로 생성(생성 모델은 피평가와 다른 sonnet + 기계 검증),
+실제 verifier에 별도 세트로 투입. 기대 라벨이 정해져 있어 **채점은 기계 대조(LLM judge 불필요)**.
+
+| 지표 | 값 (86쌍, 논문 20편) |
+|---|---|
+| 왜곡 검출 recall | **70.9%** (61/86) — direction_flip 95.7% · number_change 84.2% · unsupported_addition **25.0%** |
+| 참 claim 오탐률 | **0.0%** (0/86) |
+| 검색 실패 | 0건 — BM25 top-3가 근거를 전부 포함 (놓침은 전부 판단 단계) |
+
+**핵심 발견**: 놓친 25건이 **전부 `partially_supported`** — verifier는 왜곡 claim을 한 번도
+`supported`로 완전 승인하지 않지만, "대부분 참 + 한 요소 왜곡" 유형(특히 무근거 추가)에 부분 점수를
+준다. 그런데 리포트 작성기는 partially_supported를 본문에 포함하므로, **왜곡의 29%가 partial 채널로
+리포트에 유입될 수 있다.** → 다음 개선 루프 대상: "핵심 요소(수치·주체·조건)가 원문과 다르면
+partial이 아니라 contradicted/unsupported" 판정 기준 강화 후 동일 하니스로 재측정.
+
 ### 채점 신뢰성 관리
 
 - judge는 피평가와 다른 backend가 원칙. sonnet 폴백 판정은 gpt-5.5 원판정과 표본 20건에서 20/20 일치.
@@ -85,6 +104,8 @@ claude 계열 judge(sonnet) 단독이므로 교차 backend(gpt-5.5) 재판정으
 - **1회 실행**: LLM 비결정성 대비 반복 실행 분산 미측정.
 - **judge**: 사람 확정 판정 진행 중(잠정 93% 일치). 거짓 전제 축은 천장 효과로 변별력 없음(문항 재생성 필요).
 - **쓰기(작성팀) 평가 부재**: 컴파일 성공률·지시 이행률 등 기계 채점 속성부터 별도 하니스 예정.
+- **verifier 왜곡 세트**: 생성이 LLM(sonnet) 기반 — 기계 검증(원문 실재·형식) + 놓친 케이스 표본
+  점검은 했으나 86쌍 전수 사람 검수는 미완. partial 유출 개선 후 재측정 예정.
 
 ## 구조
 
@@ -141,6 +162,11 @@ node eval/scripts/aggregate_judged.mjs --dataset eval/data/qasper_falseprem_subs
 # 6) 인용 가드 A/B (위조 인용 문항 재실행 + 동일 judge 쌍대 판정)
 node eval/scripts/rerun_quote_guard.mjs            # → results/quote_guard_ab.md
 node eval/scripts/judge_qg_pairs.mjs               # → results/quote_guard_judge_pairs.md
+
+# 7) verifier 왜곡 claim 검출 (생성 → 실행 → 기계 채점)
+node eval/scripts/make_claim_pairs.mjs --papers 20 # → data/claim_pairs.json (sonnet 생성 + 기계 검증)
+node eval/scripts/run_verifier_eval.mjs            # 참/왜곡 세트 별도 호출로 verifier 실행
+node eval/scripts/score_verifier_eval.mjs          # → results/verifier_eval.md
 ```
 
 ## 데이터셋 버전
