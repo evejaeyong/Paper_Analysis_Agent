@@ -92,6 +92,23 @@ unsupported — partial 금지") + few-shot 3개 추가 후 동일 86쌍 재측�
 46쌍을 생성해 재검증 → **recall 97.8%, 오탐 0%** — 일반화 확인.
 전/후/홀드아웃: `results/verifier_eval.md` / `verifier_eval-p2.md` / `verifier_eval-holdout.md`
 
+### ⑤ 작성팀(워크스페이스 편집) 기계 채점 — [`results/write_eval.md`](results/write_eval.md)
+
+생성 과제라 정답이 없으므로 **기계 판정 가능한 속성 4축**으로 평가 (LLM judge 0회).
+고정 LaTeX 픽스처를 과제마다 새로 만들고, 기대 결과를 regex로 명시한 지시 10개를
+실제 경로(runWorkspaceEdit: 스냅샷→편집→컴파일 게이트)로 실행:
+
+| 축 | 통과 |
+|---|---|
+| 컴파일 성공 | 9/10 |
+| 지시 이행 (기대 regex 전부 반영) | 9/10 |
+| 보존성 (허용 외 파일 무변경) | **10/10** |
+| 인용 유효성 (\cite 키 실재) | 9/10 |
+| 전 축 통과 | **8/10** |
+
+실패 2건 분석: 1건은 앱의 의도된 스타일 규칙(빈 `\cite{}` placeholder)과 평가 축의 충돌
+(지어낸 키 위조는 0건), 1건은 편집 지시에 읽기 전용 응답(진짜 미이행). 상세 해석은 결과 문서에.
+
 ### 채점 신뢰성 관리
 
 - judge는 피평가와 다른 backend가 원칙. sonnet 폴백 판정은 gpt-5.5 원판정과 표본 20건에서 20/20 일치.
@@ -107,7 +124,8 @@ unsupported — partial 금지") + few-shot 3개 추가 후 동일 86쌍 재측�
 - **단일 데이터셋·도메인**: QASPER(NLP 논문)만 — 타 분야 일반화 미검증.
 - **1회 실행**: LLM 비결정성 대비 반복 실행 분산 미측정.
 - **judge**: 사람 확정 판정 진행 중(잠정 93% 일치). 거짓 전제 축은 천장 효과로 변별력 없음(문항 재생성 필요).
-- **쓰기(작성팀) 평가 부재**: 컴파일 성공률·지시 이행률 등 기계 채점 속성부터 별도 하니스 예정.
+- **쓰기(작성팀) 평가**: 기계 채점 4축(10과제)만 측정 — 표본이 작고, 글 품질 자체(블라인드 쌍대
+  선호)는 미평가. 지시 세트 확장과 baseline(단일 호출 편집) 비교는 다음 단계.
 - **verifier 왜곡 세트**: 생성이 LLM(sonnet) 기반 — 기계 검증(원문 실재·형식) + 놓친 케이스 표본
   점검은 했으나 전수 사람 검수는 미완. 개선의 일반화는 홀드아웃(새 논문 46쌍, recall 97.8%)으로 확인.
 
@@ -175,6 +193,10 @@ node eval/scripts/score_verifier_eval.mjs          # → results/verifier_eval.m
 node eval/scripts/make_claim_pairs.mjs --papers 10 --skip 20 --out claim_pairs_holdout.json
 node eval/scripts/run_verifier_eval.mjs --pairs claim_pairs_holdout.json --tag holdout
 node eval/scripts/score_verifier_eval.mjs --pairs claim_pairs_holdout.json --tag holdout
+
+# 8) 작성팀 기계 채점 (픽스처 생성 → 워크스페이스 편집 10과제 → 4축 판정, LaTeX 엔진 필요)
+node eval/scripts/run_write_eval.mjs               # PAA_DATA_DIR 격리, resume 지원
+node eval/scripts/score_write_eval.mjs             # → results/write_eval.md
 ```
 
 ## 데이터셋 버전
