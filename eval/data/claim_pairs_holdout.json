@@ -1,0 +1,442 @@
+{
+  "papers": {
+    "p21": {
+      "paper_id": "1911.06964",
+      "paper_title": "Learning Autocomplete Systems as a Communication Game",
+      "task_id": "q0021",
+      "claims": [
+        {
+          "id": "p21_1",
+          "source_quote": "our framework produces communication schemes that are 52.16% more accurate than rule-based baselines when specifying 77.37% of sentences",
+          "true_claim": "The proposed framework achieves 52.16% higher accuracy than rule-based baselines at a 77.37% token retention rate.",
+          "perturbed_claim": "The proposed framework achieves 52.16% higher accuracy than rule-based baselines at a 53.38% token retention rate.",
+          "perturbation_type": "number_change",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p21_2",
+          "source_quote": "11.73% more accurate than a naive, weighted optimization approach when specifying 53.38% of sentences",
+          "true_claim": "The constrained objective outperforms the linear weighted optimization approach by 11.73% in accuracy at a 53.38% retention rate.",
+          "perturbed_claim": "The linear weighted optimization approach outperforms the constrained objective by 11.73% in accuracy at a 53.38% retention rate.",
+          "perturbation_type": "direction_flip",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p21_3",
+          "source_quote": "users spent 3.86 seconds typing keywords compared to 5.76 seconds for full sentences on average",
+          "true_claim": "On average, users took 3.86 seconds to type keywords, compared to 5.76 seconds to type full sentences.",
+          "perturbed_claim": "On average, users took 3.86 seconds to type keywords, compared to 5.76 seconds to type full sentences on the Penn Treebank corpus.",
+          "perturbation_type": "condition_change",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p21_4",
+          "source_quote": "Users marked the top suggestion from the autocomplete system to be semantically equivalent to the target 80.6% of the time, and one of the top 3 was semantically equivalent 90.11% of the time",
+          "true_claim": "In the user study, 80.6% of top suggestions were marked semantically equivalent to the target, and the figure rose to 90.11% when considering any of the top three suggestions.",
+          "perturbed_claim": "In the user study, 80.6% of top suggestions were marked semantically equivalent to the target, and the figure rose to 90.11% when considering any of the top three suggestions, with accuracy further improving after users completed a training phase.",
+          "perturbation_type": "unsupported_addition",
+          "expected_perturbed_status": "unsupported"
+        },
+        {
+          "id": "p21_5",
+          "source_quote": "We evaluate our approach by training an autocomplete system on 500K randomly sampled sentences from Yelp reviews",
+          "true_claim": "The autocomplete system was trained on 500K randomly sampled sentences drawn from Yelp reviews.",
+          "perturbed_claim": "The autocomplete system was trained on 500K randomly sampled sentences drawn from Amazon product reviews.",
+          "perturbation_type": "entity_swap",
+          "expected_perturbed_status": "contradicted"
+        }
+      ]
+    },
+    "p22": {
+      "paper_id": "2001.02284",
+      "paper_title": "Multipurpose Intelligent Process Automation via Conversational Assistant",
+      "task_id": "q0022",
+      "claims": [
+        {
+          "id": "p22_1",
+          "source_quote": "Our final system successfully passed this evaluation for all 130 cases.",
+          "true_claim": "The automated evaluation was conducted on 130 manually annotated dialogue scenarios, and the system passed all of them successfully.",
+          "perturbed_claim": "The automated evaluation was conducted on 200 manually annotated dialogue scenarios, and the system passed all of them successfully.",
+          "perturbation_type": "number_change",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p22_2",
+          "source_quote": "the best performing system in the default setting achieved a macro F1 of 0.677 points for 14 possible labels, whereas the model in the extended setting performed better – its highest macro F1 score is 0.752 for the same amount of labels",
+          "true_claim": "For the Next Action Prediction task, the extended setting outperformed the default setting, achieving a macro F1 of 0.752 compared to 0.677 in the default setting.",
+          "perturbed_claim": "For the Next Action Prediction task, the default setting outperformed the extended setting, achieving a macro F1 of 0.677 compared to 0.752 in the extended setting.",
+          "perturbation_type": "direction_flip",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p22_3",
+          "source_quote": "The obtained results for the NER task revealed that German BERT performed significantly better than the multilingual BERT model. The performance of the custom NER unit is at 0.93 macro F1 points for all possible named entities",
+          "true_claim": "For the Named Entity Recognition task, German BERT significantly outperformed the multilingual BERT model, achieving 0.93 macro F1 points.",
+          "perturbed_claim": "For the Named Entity Recognition task, multilingual BERT significantly outperformed the German BERT model, achieving 0.93 macro F1 points.",
+          "perturbation_type": "entity_swap",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p22_4",
+          "source_quote": "The dataset that we collected during the trial-run consists of 300 structured dialogues with the average length of a dialogue being six (6) utterances.",
+          "true_claim": "The dataset collected during the trial run contains 300 structured dialogues with an average dialogue length of six utterances.",
+          "perturbed_claim": "The dataset collected during the trial run contains 300 structured dialogues with an average dialogue length of six utterances, and all dialogues were manually annotated by human tutors.",
+          "perturbation_type": "unsupported_addition",
+          "expected_perturbed_status": "unsupported"
+        },
+        {
+          "id": "p22_5",
+          "source_quote": "the extended system trained with multilingual BERT achieved better results than the default one with 0.801 accuracy points compared to 0.724 accuracy points for the test set",
+          "true_claim": "On the test set, the extended NAP model trained with multilingual BERT achieved a dialogue accuracy of 0.801, compared to 0.724 for the default model.",
+          "perturbed_claim": "On the training set, the extended NAP model trained with multilingual BERT achieved a dialogue accuracy of 0.801, compared to 0.724 for the default model.",
+          "perturbation_type": "condition_change",
+          "expected_perturbed_status": "contradicted"
+        }
+      ]
+    },
+    "p23": {
+      "paper_id": "2002.01664",
+      "paper_title": "Identification of Indian Languages using Ghost-VLAD pooling",
+      "task_id": "q0023",
+      "claims": [
+        {
+          "id": "p23_1",
+          "source_quote": "Our method outperforms the previous state of the art x-vector [11] method by an absolute improvement of 1.88% in F1-score and achieves 98.43% F1-score on the held-out test data.",
+          "true_claim": "The proposed GhostVLAD method achieves 98.43% F1-score on the held-out test data, outperforming the x-vector baseline by an absolute margin of 1.88% in F1-score.",
+          "perturbed_claim": "The proposed GhostVLAD method achieves 98.43% F1-score on the held-out test data, outperforming the x-vector baseline by an absolute margin of 3.76% in F1-score.",
+          "perturbation_type": "number_change",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p23_2",
+          "source_quote": "We collected and curated around 635Hrs of audio data for 7 Indian languages, namely Kannada, Hindi, Telugu, Malayalam, Bengali, and English.",
+          "true_claim": "The dataset used in this study comprises approximately 635 hours of audio data covering 7 Indian languages collected from All India Radio.",
+          "perturbed_claim": "The dataset used in this study comprises approximately 635 hours of audio data covering 9 Indian languages collected from All India Radio.",
+          "perturbation_type": "number_change",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p23_3",
+          "source_quote": "The GhostVLAD model was proposed for face recognition by Y. Zhong [10]. GhostVLAD works exactly similar to NetVLAD except it adds Ghost clusters along with the NetVLAD clusters.",
+          "true_claim": "GhostVLAD, originally proposed for face recognition, extends NetVLAD by adding ghost clusters to the standard cluster set.",
+          "perturbed_claim": "GhostVLAD, originally proposed for place recognition, extends NetVLAD by adding ghost clusters to the standard cluster set.",
+          "perturbation_type": "condition_change",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p23_4",
+          "source_quote": "Our experimental results shows that our approach outperforms the previous state of the art methods by an absolute 1.88% F1-score.",
+          "true_claim": "The GhostVLAD-based approach outperforms previous state-of-the-art language identification methods in terms of F1-score.",
+          "perturbed_claim": "The NetVLAD-based approach outperforms previous state-of-the-art language identification methods in terms of F1-score.",
+          "perturbation_type": "entity_swap",
+          "expected_perturbed_status": "contradicted"
+        }
+      ]
+    },
+    "p24": {
+      "paper_id": "1808.09111",
+      "paper_title": "Unsupervised Learning of Syntactic Structure with Invertible Neural Projections",
+      "task_id": "q0024",
+      "claims": [
+        {
+          "id": "p24_1",
+          "source_quote": "our Markov-structured model surpasses state-of-the-art results on POS induction. Similarly, we find that our tree-structured model achieves state-of-the-art performance on unsupervised dependency parsing for the difficult training condition where neither gold POS annotation nor punctuation-based constraints are available",
+          "true_claim": "The proposed tree-structured model achieves state-of-the-art performance on unsupervised dependency parsing without gold POS annotation or punctuation-based constraints.",
+          "perturbed_claim": "The proposed Markov-structured model achieves state-of-the-art performance on unsupervised dependency parsing without gold POS annotation or punctuation-based constraints.",
+          "perturbation_type": "entity_swap",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p24_2",
+          "source_quote": "Following BIBREF9 , the dimensionality INLINEFORM0 is set to 100, and the training context window size is set to 1 to encode more syntactic information. The skip-gram embeddings are trained on the one billion word language modeling benchmark dataset",
+          "true_claim": "Skip-gram embeddings of dimensionality 100 are trained with a context window size of 1 on the one billion word language modeling benchmark dataset.",
+          "perturbed_claim": "Skip-gram embeddings of dimensionality 200 are trained with a context window size of 1 on the one billion word language modeling benchmark dataset.",
+          "perturbation_type": "number_change",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p24_3",
+          "source_quote": "our approach improves over the Gaussian HMM by 5.4 points in M-1 and 5.6 points in VM",
+          "true_claim": "The proposed approach improves over the Gaussian HMM by 5.4 points in Many-to-One accuracy and 5.6 points in V-Measure.",
+          "perturbed_claim": "The proposed approach improves over the Gaussian HMM by 5.4 points in Many-to-One accuracy and 5.6 points in V-Measure on the Penn Treebank test set only.",
+          "perturbation_type": "unsupported_addition",
+          "expected_perturbed_status": "unsupported"
+        },
+        {
+          "id": "p24_4",
+          "source_quote": "Neural HMM (NHMM) BIBREF10 is a baseline that also learns word representation jointly. Both their basic model and extended Conv version does not outperform the Gaussian HMM. Their best model incorporates another LSTM to model long distance dependency and breaks the Markov assumption, yet our approach still achieves substantial improvement over it",
+          "true_claim": "The Neural HMM's basic and Conv variants do not outperform the Gaussian HMM, and even its best LSTM-based model is outperformed by the proposed approach.",
+          "perturbed_claim": "The Neural HMM's basic and Conv variants do not outperform the Gaussian HMM, and even its best LSTM-based model outperforms the proposed approach.",
+          "perturbation_type": "direction_flip",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p24_5",
+          "source_quote": "our approach is able to improve over the Gaussian DMV by 4.8 points on length INLINEFORM0 and 4.8 points on all lengths, which suggests the additional latent embedding layer and neural projector are helpful",
+          "true_claim": "The proposed model improves over the Gaussian DMV by 4.8 points on both the length-bounded and all-lengths evaluation conditions for dependency parsing.",
+          "perturbed_claim": "The proposed model improves over the basic DMV by 4.8 points on both the length-bounded and all-lengths evaluation conditions for dependency parsing.",
+          "perturbation_type": "entity_swap",
+          "expected_perturbed_status": "contradicted"
+        }
+      ]
+    },
+    "p25": {
+      "paper_id": "1906.08593",
+      "paper_title": "Conflict as an Inverse of Attention in Sequence Relationship",
+      "task_id": "q0025",
+      "claims": [
+        {
+          "id": "p25_1",
+          "source_quote": "we show that attention, by virtue of its composition, works best only when it is given that there is a match somewhere between two sequences. It does not very well adapt to cases when there is no similarity between two sequences or if the relationship is contrastive.",
+          "true_claim": "Attention works best when there is a match between two sequences and struggles when the relationship between sequences is contrastive or non-similar.",
+          "perturbed_claim": "Attention works best when there is no match between two sequences and struggles when the relationship between sequences is highly similar.",
+          "perturbation_type": "direction_flip",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p25_2",
+          "source_quote": "a standard dot-product based attention with softmax won't be able to produce weights which is below 0.33 (=1/3) for all the words in the second sequence with respect to the word \"height\" in the first sequence.",
+          "true_claim": "When a query word has no matching word in a three-word target sequence, dot-product attention with softmax cannot assign weights below 0.33 to all target words simultaneously.",
+          "perturbed_claim": "When a query word has no matching word in a three-word target sequence, dot-product attention with softmax cannot assign weights below 0.25 to all target words simultaneously.",
+          "perturbation_type": "number_change",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p25_3",
+          "source_quote": "Our approach consists of using element wise difference between two vectors followed by a linear transformation to produce a scalar weight.",
+          "true_claim": "The conflict model computes dissimilarity between word pairs using element-wise difference between vectors followed by a linear transformation to produce a scalar weight.",
+          "perturbed_claim": "The conflict model computes dissimilarity between word pairs using element-wise multiplication between vectors followed by a linear transformation to produce a scalar weight.",
+          "perturbation_type": "entity_swap",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p25_5",
+          "source_quote": "We particularly focused on the examples which were incorrectly marked in attention model but correctly in attention-conflict model. We saw that 70% of those cases are the ones where the pair was incorrectly marked as duplicate in the previous model but our combined model correctly marked them as non-duplicate.",
+          "true_claim": "Among examples that the attention-only model got wrong but the attention-conflict model got right, 70% were cases where the attention-only model falsely labeled a non-duplicate pair as duplicate.",
+          "perturbed_claim": "Among examples that the attention-only model got wrong but the attention-conflict model got right, 70% were cases where the attention-only model falsely labeled a duplicate pair as non-duplicate.",
+          "perturbation_type": "direction_flip",
+          "expected_perturbed_status": "contradicted"
+        }
+      ]
+    },
+    "p26": {
+      "paper_id": "1809.00540",
+      "paper_title": "Multilingual Clustering of Streaming News",
+      "task_id": "q0026",
+      "claims": [
+        {
+          "id": "p26_1",
+          "source_quote": "Our method is simple to implement, computationally efficient and produces state-of-the-art results on datasets in German, English and Spanish.",
+          "true_claim": "The proposed method achieves state-of-the-art results on news clustering datasets in German, English, and Spanish.",
+          "perturbed_claim": "The proposed method achieves state-of-the-art results on news clustering datasets in German, English, and French.",
+          "perturbation_type": "entity_swap",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p26_2",
+          "source_quote": "The dataset consists of 77,268, 118,045 and 134,243 documents for Spanish, English and German, respectively.",
+          "true_claim": "The IDF computation dataset contains 77,268 documents for Spanish, 118,045 for English, and 134,243 for German.",
+          "perturbed_claim": "The IDF computation dataset contains 134,243 documents for Spanish, 118,045 for English, and 77,268 for German.",
+          "perturbation_type": "number_change",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p26_3",
+          "source_quote": "the weighting of the similarity metric features using SVM significantly outperforms unsupervised baselines such as CluStream",
+          "true_claim": "The SVM-based weighting of similarity metric features significantly outperforms the unsupervised CluStream baseline.",
+          "perturbed_claim": "The SVM-based weighting of similarity metric features significantly underperforms the unsupervised CluStream baseline.",
+          "perturbation_type": "direction_flip",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p26_4",
+          "source_quote": "we also experimented with computing the monolingual clusters with the same embeddings as used in the crosslingual clustering phase, which yielded poor results. In particular, this system achieved INLINEFORM0 score of INLINEFORM1 for English, which is below the bag-of-words baseline",
+          "true_claim": "Using crosslingual embeddings for monolingual clustering produced results below the bag-of-words baseline for English.",
+          "perturbed_claim": "Using crosslingual embeddings for monolingual clustering produced results below the bag-of-words baseline for German.",
+          "perturbation_type": "condition_change",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p26_5",
+          "source_quote": "using English as a pivot language (see § SECREF3 ), where distances for every other language are only compared to English, and crosslingual clustering decisions are made only based on this distance. This yielded our best crosslingual score",
+          "true_claim": "Using English as a pivot language for crosslingual clustering yielded the best crosslingual clustering score in the experiments.",
+          "perturbed_claim": "Using English as a pivot language for crosslingual clustering yielded the best crosslingual clustering score by leveraging a multilingual transformer encoder to align embedding spaces.",
+          "perturbation_type": "unsupported_addition",
+          "expected_perturbed_status": "unsupported"
+        }
+      ]
+    },
+    "p27": {
+      "paper_id": "2004.03354",
+      "paper_title": "Inexpensive Domain Adaptation of Pretrained Language Models: A Case Study on Biomedical Named Entity Recognition",
+      "task_id": "q0027",
+      "claims": [
+        {
+          "id": "p27_1",
+          "source_quote": "We cover over 50% of the BioBERT-BERT F1 delta, at 5% of BioBERT's CO_2 footprint and 2% of its cloud compute cost.",
+          "true_claim": "GreenBioBERT achieves over 50% of the BioBERT-BERT F1 delta while using only 2% of BioBERT's cloud compute cost.",
+          "perturbed_claim": "GreenBioBERT achieves over 50% of the BioBERT-BERT F1 delta while using only 10% of BioBERT's cloud compute cost.",
+          "perturbation_type": "number_change",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p27_3",
+          "source_quote": "We improve over general-domain BERT on all tasks with varying effect sizes. Depending on the points of reference, we cover an average 52% to 60% of the BioBERT – BERT F1 delta",
+          "true_claim": "GreenBioBERT improves over general-domain BERT on all eight biomedical NER tasks, covering an average of 52% to 60% of the BioBERT–BERT F1 delta.",
+          "perturbed_claim": "GreenBioBERT underperforms general-domain BERT on all eight biomedical NER tasks, covering an average of 52% to 60% of the BioBERT–BERT F1 delta.",
+          "perturbation_type": "direction_flip",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p27_4",
+          "source_quote": "Most of the improvement can be achieved with just the small CORD-19 corpus, which is more specific to the target domain (compare \"Cord-19 only\" and \"Cord-19+PubMed+PMC\").",
+          "true_claim": "For Covid-19 QA domain adaptation, most of the performance improvement comes from the CORD-19 corpus alone, due to its higher specificity to the target domain.",
+          "perturbed_claim": "For biomedical NER domain adaptation, most of the performance improvement comes from the CORD-19 corpus alone, due to its higher specificity to the target domain.",
+          "perturbation_type": "condition_change",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p27_5",
+          "source_quote": "we train Word2Vec on in-domain text and align the resulting word vectors with the input space of a general-domain PTLM (here: BERT). We evaluate on eight biomedical Named Entity Recognition (NER) tasks",
+          "true_claim": "The proposed method trains Word2Vec on in-domain text and aligns the resulting vectors with BERT's input space, evaluated on eight biomedical NER tasks.",
+          "perturbed_claim": "The proposed method trains Word2Vec on in-domain text and aligns the resulting vectors with BERT's input space, with the alignment additionally fine-tuned using a contrastive learning objective to improve vector compatibility.",
+          "perturbation_type": "unsupported_addition",
+          "expected_perturbed_status": "unsupported"
+        }
+      ]
+    },
+    "p28": {
+      "paper_id": "1611.04798",
+      "paper_title": "Toward Multilingual Neural Machine Translation with Universal Encoder and Decoder",
+      "task_id": "q0028",
+      "claims": [
+        {
+          "id": "p28_1",
+          "source_quote": "our mix-source system achieves a considerable improvement of 2.6 BLEU points on tst2013 and 2.1 BLEU points on and tst2014",
+          "true_claim": "The mix-source system achieves an improvement of 2.6 BLEU points on tst2013 and 2.1 BLEU points on tst2014 over the baseline NMT.",
+          "perturbed_claim": "The mix-source system achieves an improvement of 3.6 BLEU points on tst2013 and 2.1 BLEU points on tst2014 over the baseline NMT.",
+          "perturbation_type": "number_change",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p28_2",
+          "source_quote": "Adding French data to the source side and their corresponding German data to the target side in our mix-multi-source system also help to gain 2.2 and 1.6 BLEU points more on tst2013 tst2014, respectively",
+          "true_claim": "The mix-multi-source system gains 2.2 BLEU points on tst2013 and 1.6 BLEU points on tst2014 compared to the baseline.",
+          "perturbed_claim": "The mix-source system gains 2.2 BLEU points on tst2013 and 1.6 BLEU points on tst2014 compared to the baseline.",
+          "perturbation_type": "entity_swap",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p28_3",
+          "source_quote": "We observe a better improvement from our mix-source system compared to our mix-multi-source system.",
+          "true_claim": "The mix-source system outperforms the mix-multi-source system in terms of BLEU improvement.",
+          "perturbed_claim": "The mix-multi-source system outperforms the mix-source system in terms of BLEU improvement.",
+          "perturbation_type": "direction_flip",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p28_4",
+          "source_quote": "when this adaptation is applied, our system brings an improvement of +1.52 BLEU on tst2013 and +1.06 BLEU on tst2014",
+          "true_claim": "After adaptation with real parallel corpus, the large-data mix-source system improves by 1.52 BLEU on tst2013 and 1.06 BLEU on tst2014.",
+          "perturbed_claim": "After adaptation with real parallel corpus, the large-data mix-source system improves by 1.52 BLEU on tst2013 and 1.06 BLEU on tst2015.",
+          "perturbation_type": "condition_change",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p28_5",
+          "source_quote": "Unsupprisingly, both bridge and universal systems perform worse than the pivot one.",
+          "true_claim": "In the zero-resourced translation scenario, both the bridge and universal systems perform worse than the pivot system.",
+          "perturbed_claim": "In the zero-resourced translation scenario, both the bridge and universal systems perform worse than the pivot system, because the pivot system uses a transformer-based architecture.",
+          "perturbation_type": "unsupported_addition",
+          "expected_perturbed_status": "unsupported"
+        }
+      ]
+    },
+    "p29": {
+      "paper_id": "1912.13337",
+      "paper_title": "What Does My QA Model Know? Devising Controlled Probes using Expert Knowledge",
+      "task_id": "q0029",
+      "claims": [
+        {
+          "id": "p29_1",
+          "source_quote": "our best model achieves 77% test accuracy without specialized training, as opposed to 51% for a task-specific LSTM-based model",
+          "true_claim": "The best model achieves 77% test accuracy on definitions without specialized training, compared to only 51% for a task-specific LSTM-based model trained directly on the probing task.",
+          "perturbed_claim": "The best model achieves 77% test accuracy on definitions without specialized training, compared to only 51% for a task-specific BERT-based model trained directly on the probing task.",
+          "perturbation_type": "entity_swap",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p29_3",
+          "source_quote": "RoBERTa improves on 2-hop hyponymy inference with random distractors by 18% (from 59% to 77%)",
+          "true_claim": "After inoculation with only 100 examples, RoBERTa improves on 2-hop hyponymy inference with random distractors by 18%, going from 59% to 77%.",
+          "perturbed_claim": "After inoculation with only 100 examples, RoBERTa improves on 2-hop hypernymy inference with random distractors by 18%, going from 59% to 77%.",
+          "perturbation_type": "condition_change",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p29_4",
+          "source_quote": "our RoBERTa model has a cluster accuracy of 75%, meaning that it can answer all questions perfectly for 75% of the target concepts",
+          "true_claim": "On the definitions probe, RoBERTa achieves a cluster-level accuracy of 75%, correctly answering all questions for 75% of target concepts.",
+          "perturbed_claim": "On the definitions probe, RoBERTa achieves a cluster-level accuracy of 36%, correctly answering all questions for 36% of target concepts.",
+          "perturbation_type": "number_change",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p29_5",
+          "source_quote": "when inoculating on synonymy, the cost for ESIM is around 7% reduced accuracy on its original task, as opposed to <1% and around 1% for BERT and RoBERTa, respectively",
+          "true_claim": "When inoculated on synonymy, ESIM suffers approximately 7% reduced accuracy on its original task, while BERT and RoBERTa incur less than 1% and around 1% inoculation cost, respectively.",
+          "perturbed_claim": "When inoculated on synonymy, ESIM suffers approximately 7% reduced accuracy on its original task, and this lower inoculation cost compared to transformer models demonstrates ESIM's superior ability to absorb new tasks without forgetting.",
+          "perturbation_type": "unsupported_addition",
+          "expected_perturbed_status": "contradicted"
+        }
+      ]
+    },
+    "p30": {
+      "paper_id": "1809.01541",
+      "paper_title": "Copenhagen at CoNLL--SIGMORPHON 2018: Multilingual Inflection in Context with Explicit Morphosyntactic Decoding",
+      "task_id": "q0030",
+      "claims": [
+        {
+          "id": "p30_1",
+          "source_quote": "achieve the best overall accuracy of 49.87 on Task 2 by introducing three augmentations to the provided baseline system",
+          "true_claim": "The Team Copenhagen system achieved an overall accuracy of 49.87 on Task 2 by introducing three augmentations to the baseline system.",
+          "perturbed_claim": "The Team Copenhagen system achieved an overall accuracy of 52.43 on Task 2 by introducing three augmentations to the baseline system.",
+          "perturbation_type": "number_change",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p30_2",
+          "source_quote": "encoding the full context with an LSTM highly enhances the performance of the model, by 11.15% on average",
+          "true_claim": "Encoding the full context with an LSTM improved model performance by 11.15 percentage points on average.",
+          "perturbed_claim": "Encoding the full context with an LSTM decreased model performance by 11.15 percentage points on average.",
+          "perturbation_type": "direction_flip",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p30_3",
+          "source_quote": "We indeed see results improving drastically with the introduction of multilingual training, with multilingual results being 7.96% higher than monolingual ones on average.",
+          "true_claim": "Multilingual training improved results by 7.96% on average compared to monolingual training.",
+          "perturbed_claim": "Multi-task learning with MSD prediction improved results by 7.96% on average compared to monolingual training.",
+          "perturbation_type": "entity_swap",
+          "expected_perturbed_status": "contradicted"
+        },
+        {
+          "id": "p30_4",
+          "source_quote": "monolingual finetuning improves accuracy across the board, as one would expect, by 2.72% on average",
+          "true_claim": "Monolingual finetuning improved accuracy across all languages by 2.72% on average.",
+          "perturbed_claim": "Monolingual finetuning improved accuracy across all languages by 2.72% on average in the high-resource setting.",
+          "perturbation_type": "condition_change",
+          "expected_perturbed_status": "unsupported"
+        },
+        {
+          "id": "p30_5",
+          "source_quote": "the multi-tasking approach paired with multilingual training and subsequent monolingual finetuning outperforms the other architectures for five out of seven languages: de, en, fr, ru and sv",
+          "true_claim": "The multi-tasking approach combined with multilingual training and monolingual finetuning outperformed other architectures for five out of seven languages.",
+          "perturbed_claim": "The multi-tasking approach combined with multilingual training and monolingual finetuning outperformed other architectures for five out of seven languages, using a language-family-based grouping strategy for multilingual batches.",
+          "perturbation_type": "unsupported_addition",
+          "expected_perturbed_status": "unsupported"
+        }
+      ]
+    }
+  }
+}

@@ -76,20 +76,21 @@ claude 계열 judge(sonnet) 단독이므로 교차 backend(gpt-5.5) 재판정으
 (설계상 unsupported/contradicted)을 쌍으로 생성(생성 모델은 피평가와 다른 sonnet + 기계 검증),
 실제 verifier에 별도 세트로 투입. 기대 라벨이 정해져 있어 **채점은 기계 대조(LLM judge 불필요)**.
 
-| 지표 (86쌍, 논문 20편) | 개선 전 | 개선 후 (판정 기준 강화) |
-|---|---|---|
-| **왜곡 검출 recall** | 70.9% (61/86) | **100%** (86/86) |
-| **참 claim 오탐률** (본문 제외 강등) | 0.0% | **0.0%** |
-| 유형별 최저 (unsupported_addition) | 25.0% | 100% |
-| 검색(BM25 top-3) 실패 | 0건 | 0건 |
+| 지표 | 개선 전 (86쌍) | 개선 후 (동일 86쌍) | **홀드아웃** (새 논문 10편, 46쌍) |
+|---|---|---|---|
+| **왜곡 검출 recall** | 70.9% | **100%** | **97.8%** (45/46) |
+| **참 claim 오탐률** | 0.0% | **0.0%** | **0.0%** |
+| 유형별 최저 (unsupported_addition) | 25.0% | 100% | 100% |
 
 **발견 → 개선 루프 (2번째)**: 개선 전 놓친 25건이 **전부 `partially_supported`** — verifier는 왜곡
 claim을 `supported`로 완전 승인하지는 않지만 "대부분 참 + 한 요소 왜곡"(특히 무근거 추가)에 부분
 점수를 줬고, 리포트 작성기는 partial을 본문에 포함하므로 **왜곡의 29%가 partial 채널로 유입** 가능했다.
 → verifier 프롬프트에 **핵심 요소 규칙**("수치·주체·조건이 원문과 다르면 contradicted, 원문에 없으면
 unsupported — partial 금지") + few-shot 3개 추가 후 동일 86쌍 재측정: **recall 100%, 오탐 0% 유지**
-(부작용: 참 claim 1건 supported→partial 이동 — 본문 포함엔 영향 없음). 전/후: `results/verifier_eval.md`
-/ `results/verifier_eval-p2.md`
+(부작용: 참 claim 1건 supported→partial 이동 — 본문 포함엔 영향 없음).
+**홀드아웃 확증**: 개선에 쓰인 세트 재측정 100%는 과적합일 수 있으므로, 겹치지 않는 새 논문 10편으로
+46쌍을 생성해 재검증 → **recall 97.8%, 오탐 0%** — 일반화 확인.
+전/후/홀드아웃: `results/verifier_eval.md` / `verifier_eval-p2.md` / `verifier_eval-holdout.md`
 
 ### 채점 신뢰성 관리
 
@@ -108,7 +109,7 @@ unsupported — partial 금지") + few-shot 3개 추가 후 동일 86쌍 재측�
 - **judge**: 사람 확정 판정 진행 중(잠정 93% 일치). 거짓 전제 축은 천장 효과로 변별력 없음(문항 재생성 필요).
 - **쓰기(작성팀) 평가 부재**: 컴파일 성공률·지시 이행률 등 기계 채점 속성부터 별도 하니스 예정.
 - **verifier 왜곡 세트**: 생성이 LLM(sonnet) 기반 — 기계 검증(원문 실재·형식) + 놓친 케이스 표본
-  점검은 했으나 86쌍 전수 사람 검수는 미완. partial 유출 개선 후 재측정 예정.
+  점검은 했으나 전수 사람 검수는 미완. 개선의 일반화는 홀드아웃(새 논문 46쌍, recall 97.8%)으로 확인.
 
 ## 구조
 
@@ -170,6 +171,10 @@ node eval/scripts/judge_qg_pairs.mjs               # → results/quote_guard_jud
 node eval/scripts/make_claim_pairs.mjs --papers 20 # → data/claim_pairs.json (sonnet 생성 + 기계 검증)
 node eval/scripts/run_verifier_eval.mjs            # 참/왜곡 세트 별도 호출로 verifier 실행
 node eval/scripts/score_verifier_eval.mjs          # → results/verifier_eval.md
+#    프롬프트 버전 비교: --tag p2 / 홀드아웃(새 논문 10편):
+node eval/scripts/make_claim_pairs.mjs --papers 10 --skip 20 --out claim_pairs_holdout.json
+node eval/scripts/run_verifier_eval.mjs --pairs claim_pairs_holdout.json --tag holdout
+node eval/scripts/score_verifier_eval.mjs --pairs claim_pairs_holdout.json --tag holdout
 ```
 
 ## 데이터셋 버전

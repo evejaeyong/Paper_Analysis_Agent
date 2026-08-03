@@ -179,7 +179,7 @@ KPAC의 읽기(QA) 에이전트는 데모로 끝나지 않고 **headless 평가 
 
 **평가 → 개선 → 재검증 루프**: 평가에서 근거 인용의 13.3%가 "의역을 원문 인용처럼 제시"하는 위조임을 발견 → 출력 시점 인용 가드(`core/quoteGuard.js`, 원문 대조 + 1회 수선) 도입 → 위조 인용 **22건 → 0건**, 동일 judge 쌍대 판정으로 **정답률 회귀 0건** 확인 ([PR #27](https://github.com/evejaeyong/Paper_Analysis_Agent/pull/27)). 이어서 Anthropic 공식 가이드 기준으로 프롬프트를 교정(문서 상단 배치 + judge few-shot)하고 **150문항 × 3변형을 동일 judge로 쌍대 재평가** — 정확도 유지 + 인용 위조 전수 0% + 베이스라인 대비 쌍대 6:0 확인 ([PR #29](https://github.com/evejaeyong/Paper_Analysis_Agent/pull/29), `eval/results/prompt_v2_ab.md`).
 
-**Verifier(claim 검증) 정면 평가 + 2번째 개선 루프**: 원문에서 참/왜곡 claim 쌍을 설계 생성해 실제 verifier에 투입(기계 채점) — 왜곡 검출 recall 70.9%에서 실패 채널(partial 유출)을 특정하고, 판정 기준 강화 후 동일 하니스 재측정으로 **recall 100%, 참 claim 오탐 0% 유지** (`eval/results/verifier_eval-p2.md`).
+**Verifier(claim 검증) 정면 평가 + 2번째 개선 루프**: 원문에서 참/왜곡 claim 쌍을 설계 생성해 실제 verifier에 투입(기계 채점) — 왜곡 검출 recall 70.9%에서 실패 채널(partial 유출)을 특정하고, 판정 기준 강화 후 동일 하니스 재측정으로 **recall 100%, 참 claim 오탐 0% 유지**. 과적합 여부는 **홀드아웃(겹치지 않는 새 논문 10편, 46쌍)으로 확증 — recall 97.8%, 오탐 0%** (`eval/results/verifier_eval-holdout.md`).
 
 방법론·전체 결과·한계(표본 크기, 단일 도메인, judge 검증 상태)·재현 명령은 **[eval/README.md](./eval/README.md)** 참고. 평가는 계속 업데이트됩니다 (다음: 작성팀 기계 채점).
 

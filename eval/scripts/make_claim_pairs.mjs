@@ -19,20 +19,27 @@ function argValue(name, fallback = null) {
   return i >= 0 && argv[i + 1] ? argv[i + 1] : fallback;
 }
 const N_PAPERS = Number(argValue('--papers', '20'));
+// --skip N: 앞의 N편을 건너뛰고 그다음부터 선택 (홀드아웃 세트 생성용 — 기존 세트와 논문 불겹침)
+const SKIP = Number(argValue('--skip', '0'));
+// --out <file>: 출력 파일명 (기본 claim_pairs.json)
+const OUT_NAME = argValue('--out', 'claim_pairs.json');
 const GEN = { backend: 'claude', model: 'claude-sonnet-4-6', reasoningEffort: 'low' };
 const GEN_MAX_CHARS = 60000; // 생성 입력 상한 (검증 실행은 전문 사용)
 const TYPES = ['number_change', 'direction_flip', 'entity_swap', 'condition_change', 'unsupported_addition'];
 const EXPECTED = ['contradicted', 'unsupported'];
 
-const outPath = path.join(__dirname, '..', 'data', 'claim_pairs.json');
+const outPath = path.join(__dirname, '..', 'data', OUT_NAME);
 const tasks = JSON.parse(await readFile(path.join(__dirname, '..', 'data', 'qasper_v2_subset.json'), 'utf8'));
 
-// 논문 중복 제거 후 앞에서 N편
+// 논문 중복 제거 → SKIP편 건너뛰고 N_PAPERS편 선택
 const papers = [];
 const seen = new Set();
+let uniqueIdx = 0;
 for (const t of tasks) {
   if (seen.has(t.paper_id)) continue;
   seen.add(t.paper_id);
+  uniqueIdx++;
+  if (uniqueIdx <= SKIP) continue;
   papers.push(t);
   if (papers.length >= N_PAPERS) break;
 }
@@ -69,7 +76,7 @@ ${paperText}
 let totalPairs = 0, dropped = 0;
 for (let p = 0; p < papers.length; p++) {
   const paper = papers[p];
-  const pid = `p${String(p + 1).padStart(2, '0')}`;
+  const pid = `p${String(SKIP + p + 1).padStart(2, '0')}`;
   if (store.papers[pid]?.claims?.length) {
     console.log(`[${p + 1}/${papers.length}] ${pid} ... skip (완료됨, ${store.papers[pid].claims.length}쌍)`);
     totalPairs += store.papers[pid].claims.length;
