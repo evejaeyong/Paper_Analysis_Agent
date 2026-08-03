@@ -13,10 +13,13 @@ import { chunk } from '../../utils/chunker.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // --tag <name>: run 파일 접미사 및 결과 파일명 (run_verifier_eval.mjs의 --tag와 짝)
+// --pairs <file>: claim 쌍 파일 (기본 claim_pairs.json)
 const argv = process.argv.slice(2);
 const tagIdx = argv.indexOf('--tag');
 const TAG = tagIdx >= 0 && argv[tagIdx + 1] ? `-${argv[tagIdx + 1]}` : '';
-const store = JSON.parse(await readFile(path.join(__dirname, '..', 'data', 'claim_pairs.json'), 'utf8'));
+const pairsIdx = argv.indexOf('--pairs');
+const PAIRS_NAME = pairsIdx >= 0 && argv[pairsIdx + 1] ? argv[pairsIdx + 1] : 'claim_pairs.json';
+const store = JSON.parse(await readFile(path.join(__dirname, '..', 'data', PAIRS_NAME), 'utf8'));
 const tasks = JSON.parse(await readFile(path.join(__dirname, '..', 'data', 'qasper_v2_subset.json'), 'utf8'));
 const taskById = new Map(tasks.map(t => [t.task_id, t]));
 const runsDir = path.join(__dirname, '..', 'runs');

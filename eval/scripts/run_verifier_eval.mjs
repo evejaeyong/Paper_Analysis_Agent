@@ -12,10 +12,13 @@ import { getCurrent as getPrompts } from '../../core/promptStore.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // --tag <name>: run 파일명 접미사 (프롬프트 버전 비교용, 예: --tag v2 → verifier-eval-v2-...)
+// --pairs <file>: claim 쌍 파일 (기본 claim_pairs.json, 홀드아웃은 claim_pairs_holdout.json)
 const argv = process.argv.slice(2);
 const tagIdx = argv.indexOf('--tag');
 const TAG = tagIdx >= 0 && argv[tagIdx + 1] ? `-${argv[tagIdx + 1]}` : '';
-const pairsPath = path.join(__dirname, '..', 'data', 'claim_pairs.json');
+const pairsIdx = argv.indexOf('--pairs');
+const PAIRS_NAME = pairsIdx >= 0 && argv[pairsIdx + 1] ? argv[pairsIdx + 1] : 'claim_pairs.json';
+const pairsPath = path.join(__dirname, '..', 'data', PAIRS_NAME);
 const runsDir = path.join(__dirname, '..', 'runs');
 const store = JSON.parse(await readFile(pairsPath, 'utf8'));
 const tasks = JSON.parse(await readFile(path.join(__dirname, '..', 'data', 'qasper_v2_subset.json'), 'utf8'));
