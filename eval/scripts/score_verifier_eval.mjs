@@ -12,11 +12,15 @@ import { BM25Index } from '../../utils/bm25.js';
 import { chunk } from '../../utils/chunker.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+// --tag <name>: run 파일 접미사 및 결과 파일명 (run_verifier_eval.mjs의 --tag와 짝)
+const argv = process.argv.slice(2);
+const tagIdx = argv.indexOf('--tag');
+const TAG = tagIdx >= 0 && argv[tagIdx + 1] ? `-${argv[tagIdx + 1]}` : '';
 const store = JSON.parse(await readFile(path.join(__dirname, '..', 'data', 'claim_pairs.json'), 'utf8'));
 const tasks = JSON.parse(await readFile(path.join(__dirname, '..', 'data', 'qasper_v2_subset.json'), 'utf8'));
 const taskById = new Map(tasks.map(t => [t.task_id, t]));
 const runsDir = path.join(__dirname, '..', 'runs');
-const outPath = path.join(__dirname, '..', 'results', 'verifier_eval.md');
+const outPath = path.join(__dirname, '..', 'results', `verifier_eval${TAG}.md`);
 const TOP_K = 3; // agents/verifier.js와 동일
 
 const normWs = s => (s || '').replace(/\s+/g, ' ').trim();
@@ -43,8 +47,8 @@ for (const pid of Object.keys(store.papers).sort()) {
   for (const c of chunks) idx.add(c.id, c.text);
   const chunkText = new Map(chunks.map(c => [c.id, c.text]));
 
-  const tRun = await loadRun(`verifier-eval-${pid}-true.json`);
-  const fRun = await loadRun(`verifier-eval-${pid}-perturbed.json`);
+  const tRun = await loadRun(`verifier-eval${TAG}-${pid}-true.json`);
+  const fRun = await loadRun(`verifier-eval${TAG}-${pid}-perturbed.json`);
   if (!tRun?.verdicts || !fRun?.verdicts) { missingRuns++; continue; }
   const tById = new Map(tRun.verdicts.map(v => [v.claimId, v]));
   const fById = new Map(fRun.verdicts.map(v => [v.claimId, v]));

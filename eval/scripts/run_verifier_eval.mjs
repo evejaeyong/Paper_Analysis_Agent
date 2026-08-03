@@ -11,6 +11,10 @@ import { run as runVerifier } from '../../agents/verifier.js';
 import { getCurrent as getPrompts } from '../../core/promptStore.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+// --tag <name>: run 파일명 접미사 (프롬프트 버전 비교용, 예: --tag v2 → verifier-eval-v2-...)
+const argv = process.argv.slice(2);
+const tagIdx = argv.indexOf('--tag');
+const TAG = tagIdx >= 0 && argv[tagIdx + 1] ? `-${argv[tagIdx + 1]}` : '';
 const pairsPath = path.join(__dirname, '..', 'data', 'claim_pairs.json');
 const runsDir = path.join(__dirname, '..', 'runs');
 const store = JSON.parse(await readFile(pairsPath, 'utf8'));
@@ -35,7 +39,7 @@ console.log(`대상: 논문 ${pids.length}편 × 2세트 = ${jobs.length} runs`)
 let done = 0;
 for (const [pid, setName, claims] of jobs) {
   done++;
-  const file = path.join(runsDir, `verifier-eval-${pid}-${setName}.json`);
+  const file = path.join(runsDir, `verifier-eval${TAG}-${pid}-${setName}.json`);
   const existing = await loadRun(file);
   if (existing?.verdicts?.length === claims.length && !existing.error) {
     console.log(`[${done}/${jobs.length}] ${pid}/${setName} ... skip (완료됨)`);
